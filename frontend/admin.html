@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Portfolio</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body class="admin">
+    <!-- Login Screen -->
+    <div id="login-screen" class="login-screen">
+        <div class="login-box">
+            <h1>Admin Login</h1>
+            <form id="login-form" class="login-form" onsubmit="return false;">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required autofocus>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit">Login</button>
+                <div id="login-error" class="error-message" style="display: none;"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div id="admin-dashboard" class="admin-container" style="display: none;">
+        <!-- Header -->
+        <div class="admin-header">
+            <h1>Portfolio Admin Panel</h1>
+            <div class="header-actions">
+                <button class="btn" id="backup-btn">Download Backup</button>
+                <a href="index.html" class="btn btn-secondary">View Site</a>
+                <button class="btn btn-secondary" id="logout-btn">Logout</button>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="admin-tabs">
+            <button class="admin-tab active" data-tab="projects">Projects</button>
+            <button class="admin-tab" data-tab="experience">Experience</button>
+            <button class="admin-tab" data-tab="skills">Skills</button>
+            <button class="admin-tab" data-tab="about">About</button>
+            <button class="admin-tab" data-tab="contacts">Contact Submissions</button>
+        </div>
+
+        <!-- Tab Contents -->
+        
+        <!-- Projects Tab -->
+        <div id="tab-projects" class="tab-content active">
+            <div class="admin-form">
+                <h3 id="project-form-title">Add New Project</h3>
+                <form id="project-form" onsubmit="event.preventDefault(); return false;">
+                    <input type="hidden" id="project-id">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="project-title">Title *</label>
+                            <input type="text" id="project-title" required>
+                        </div>
+                        <div class="form-group checkbox-group">
+                            <input type="checkbox" id="project-featured">
+                            <label for="project-featured">Featured Project</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-description">Description *</label>
+                        <textarea id="project-description" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-tech-input">Technologies (press Enter to add) *</label>
+                        <div class="tech-input-container" id="project-tech-container">
+                            <input type="text" class="tech-input" id="project-tech-input" placeholder="Add technology...">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="project-github">GitHub URL</label>
+                            <input type="url" id="project-github">
+                        </div>
+                        <div class="form-group">
+                            <label for="project-external">External URL</label>
+                            <input type="url" id="project-external">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Project Images (Select multiple for carousel)</label>
+                        <div class="file-upload-container">
+                            <div class="upload-tabs">
+                                <button type="button" class="upload-tab active" data-upload-tab="upload">Upload New</button>
+                                <button type="button" class="upload-tab" data-upload-tab="existing">Choose Existing</button>
+                            </div>
+                            
+                            <!-- Upload Tab -->
+                            <div id="upload-tab-content" class="upload-tab-content active">
+                                <div class="file-upload-area" id="project-upload-area">
+                                    <input type="file" id="project-image-file" accept="image/*" multiple style="display: none;">
+                                    <div class="upload-content">
+                                        <div class="upload-icon">📁</div>
+                                        <p class="upload-text">Click to upload or drag and drop</p>
+                                        <p class="upload-hint">PNG, JPG, WEBP up to 5MB each (multiple allowed)</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Existing Images Tab -->
+                            <div id="existing-tab-content" class="upload-tab-content">
+                                <div class="existing-images-grid" id="existing-images-grid">
+                                    <p class="loading-text">Loading images...</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Selected Images Preview -->
+                            <div id="selected-images-container" style="display: none; margin-top: 20px;">
+                                <label>Selected Images (Drag to reorder for carousel)</label>
+                                <div id="selected-images-list" class="selected-images-list"></div>
+                            </div>
+                            
+                            <input type="hidden" id="project-image-url">
+                            <input type="hidden" id="project-image-urls">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-order">Display Order</label>
+                        <input type="number" id="project-order" value="0" min="0">
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn" id="project-save-btn">Save Project</button>
+                        <button type="button" class="btn btn-secondary" id="project-cancel-btn" style="display: none;">Cancel</button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="data-list">
+                <h3>All Projects</h3>
+                <div id="projects-list"></div>
+            </div>
+        </div>
+
+        <!-- Experience Tab -->
+        <div id="tab-experience" class="tab-content">
+            <div class="admin-form">
+                <h3 id="experience-form-title">Add New Experience</h3>
+                <form id="experience-form">
+                    <input type="hidden" id="experience-id">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="experience-company">Company *</label>
+                            <input type="text" id="experience-company" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="experience-company-url">Company URL</label>
+                            <input type="url" id="experience-company-url">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="experience-role">Role *</label>
+                            <input type="text" id="experience-role" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="experience-date">Date Range *</label>
+                            <input type="text" id="experience-date" placeholder="e.g., Jan 2020 - Present" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="experience-responsibilities">Responsibilities (one per line) *</label>
+                        <textarea id="experience-responsibilities" placeholder="Enter each responsibility on a new line" rows="6" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="experience-order">Display Order</label>
+                        <input type="number" id="experience-order" value="0" min="0">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn">Save Experience</button>
+                        <button type="button" class="btn btn-secondary" id="experience-cancel-btn" style="display: none;">Cancel</button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="data-list">
+                <h3>All Experience</h3>
+                <div id="experience-list"></div>
+            </div>
+        </div>
+
+        <!-- Skills Tab -->
+        <div id="tab-skills" class="tab-content">
+            <div class="admin-form">
+                <h3 id="skill-form-title">Add New Skill</h3>
+                <form id="skill-form">
+                    <input type="hidden" id="skill-id">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="skill-name">Skill Name *</label>
+                            <input type="text" id="skill-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="skill-category">Category</label>
+                            <input type="text" id="skill-category" placeholder="e.g., Language, Framework, Tool">
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn">Save Skill</button>
+                        <button type="button" class="btn btn-secondary" id="skill-cancel-btn" style="display: none;">Cancel</button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="data-list">
+                <h3>All Skills</h3>
+                <div id="skills-list"></div>
+            </div>
+        </div>
+
+        <!-- About Tab -->
+        <div id="tab-about" class="tab-content">
+            <div class="admin-form">
+                <h3>About Section</h3>
+                <form id="about-form">
+                    <div class="form-group">
+                        <label for="about-bio">Bio *</label>
+                        <textarea id="about-bio" rows="10" placeholder="Enter your bio. Use double line breaks for paragraphs." required></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="about-company">Current Company</label>
+                            <input type="text" id="about-company">
+                        </div>
+                        <div class="form-group">
+                            <label for="about-role">Current Role</label>
+                            <input type="text" id="about-role">
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn">Save About</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Contact Submissions Tab -->
+        <div id="tab-contacts" class="tab-content">
+            <div class="data-list">
+                <h3>Contact Form Submissions</h3>
+                <div id="contacts-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/admin.js"></script>
+</body>
+</html>

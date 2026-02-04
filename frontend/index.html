@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Portfolio website - Software Developer">
+    <title>Portfolio</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/carousel.css">
+</head>
+<body>
+    <!-- Loader -->
+    <div class="loader-wrapper">
+        <svg id="loader" width="200" height="200" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <polygon id="loader-hexagon" points="50,5 90,30 90,70 50,95 10,70 10,30" fill="none" stroke="#64ffda" stroke-width="2"/>
+            <text id="loader-letter" x="50" y="65" font-size="40" font-weight="bold" text-anchor="middle" fill="#64ffda">K</text>
+        </svg>
+    </div>
+
+    <!-- Side Navigation -->
+    <div class="side-nav side-nav-left">
+        <ul class="side-links">
+            <li>
+                <a href="https://github.com/Kev-11" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+                    <svg xmlns="http://www.w3.org/2000/svg" role="img" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+                        <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+                    </svg>
+                </a>
+            </li>
+            <li>
+                <a href="https://www.instagram.com/justkevin_.05?igsh=MXVmd2prOWM0MDIyeQ%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                    <svg xmlns="http://www.w3.org/2000/svg" role="img" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                    </svg>
+                </a>
+            </li>
+            <li>
+                <a href="https://www.linkedin.com/in/kevin-05-patel" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+                    <svg xmlns="http://www.w3.org/2000/svg" role="img" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+                        <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+                        <rect x="2" y="9" width="4" height="12"></rect>
+                        <circle cx="4" cy="4" r="2"></circle>
+                    </svg>
+                </a>
+            </li>
+        </ul>
+        <div class="side-line"></div>
+    </div>
+
+    <div class="side-nav side-nav-right">
+        <div class="side-email">
+            <a href="mailto:kevin.05.patel@gmail.com">kevin.05.patel@gmail.com</a>
+        </div>
+        <div class="side-line"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav id="navbar">
+        <div class="nav-content">
+            <div class="nav-logo">
+                <svg width="50" height="50" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <polygon points="50,5 90,30 90,70 50,95 10,70 10,30" fill="none" stroke="currentColor" stroke-width="2"/>
+                    <text x="50" y="65" font-size="40" font-weight="bold" text-anchor="middle" fill="currentColor">K</text>
+                </svg>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#about">About</a></li>
+                <li><a href="#jobs">Experience</a></li>
+                <li><a href="#projects">Work</a></li>
+                <li><a href="#contact">Contact</a></li>
+                <li><a href="assets/resume.pdf" class="nav-resume" target="_blank">Resume</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="hero">
+        <div class="container">
+            <p class="hero-intro">Hi, my name is</p>
+            <h1 class="hero-name">Kevin Patel.</h1>
+            <h2 class="hero-tagline">I turn caffeine into code.</h2>
+            <p class="hero-description">
+                I'm a software developer who believes the best code is the one that makes you smile.
+                When I'm not debugging why my code works in production but not locally, I'm crafting digital experiences
+                that are actually enjoyable to use.
+            </p>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about">
+        <div class="container fade-in">
+            <h2 class="numbered-heading">About Me</h2>
+            <div class="about-content">
+                <div class="about-text">
+                    <div id="about-bio">
+                        <p>Hello! I'm passionate about building digital solutions that make a difference. My journey into software development began with curiosity and has evolved into a deep love for crafting elegant code and intuitive user experiences. Whether it's frontend magic or backend logic, I find joy in solving problems one line at a time.</p>
+                        
+                        <p>Fast-forward to today, and I'm currently working at a company where I'm building quality software solutions and expanding my horizons. Recently, I've developed a strong inclination towards data science and machine learning, diving into the fascinating world of algorithms that can learn and adapt.</p>
+                        
+                        <p>Here are a few technologies I've been working with recently:</p>
+                    </div>
+                    <ul class="skills-list" id="skills-list">
+                        <!-- Skills will be loaded dynamically -->
+                        <li>HTML</li>
+                        <li>CSS</li>
+                        <li>JavaScript (ES6+)</li>
+                        <li>TypeScript</li>
+                        <li>React</li>
+                        <li>Node.js</li>
+                        <li>Python</li>
+                        <li>SQL</li>
+                        <li>Scikit-learn</li>
+                        <li>Pandas</li>
+                    </ul>
+                </div>
+                <div class="about-photo">
+                    <div class="photo-wrapper">
+                        <img src="assets/images/pfp.jpg" alt="Kevin Patel" class="profile-photo">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Experience Section -->
+    <section id="jobs">
+        <div class="container fade-in">
+            <h2 class="numbered-heading">Where I've Worked</h2>
+            <div class="jobs-container">
+                <ul class="job-tabs" role="tablist" id="job-tabs">
+                    <!-- Tabs will be loaded dynamically -->
+                </ul>
+                <div class="job-panels" id="job-panels">
+                    <!-- Job panels will be loaded dynamically -->
+                    <div class="job-panel active">
+                        <h3 class="job-title">
+                            <span>Software Developer</span>
+                            <span class="job-company"> @ <a href="#" target="_blank" rel="noopener noreferrer">Company</a></span>
+                        </h3>
+                        <p class="job-date">January 2020 - Present</p>
+                        <ul class="job-description">
+                            <li>Add your experience details via the admin panel</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Projects Section -->
+    <section id="projects">
+        <div class="container fade-in">
+            <h2 class="numbered-heading">Some Things I've Built</h2>
+            
+            <!-- Featured Projects -->
+            <div class="featured-projects" id="featured-projects">
+                <!-- Featured projects will be loaded dynamically -->
+                <div class="featured-project fade-in">
+                    <div class="project-content">
+                        <p class="project-overline">Featured Project</p>
+                        <h3 class="project-title">Project Title</h3>
+                        <div class="project-description">
+                            <p>Add your featured projects via the admin panel to showcase your best work here.</p>
+                        </div>
+                        <ul class="project-tech-list">
+                            <li>React</li>
+                            <li>Node.js</li>
+                            <li>MongoDB</li>
+                        </ul>
+                        <div class="project-links">
+                            <a href="#" aria-label="GitHub Link" title="GitHub">
+                                <svg xmlns="http://www.w3.org/2000/svg" role="img" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+                                    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+                                </svg>
+                            </a>
+                            <a href="#" aria-label="External Link" title="Visit Project">
+                                <svg xmlns="http://www.w3.org/2000/svg" role="img" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                    <polyline points="15 3 21 3 21 9"></polyline>
+                                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="project-image">
+                        <div class="project-image-wrapper">
+                            <div style="width: 100%; height: 300px; background: var(--light-navy); border-radius: var(--border-radius); display: flex; align-items: center; justify-content: center; color: var(--slate);">
+                                Project Image
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Other Projects -->
+            <div class="other-projects">
+                <h3 style="text-align: center; color: var(--lightest-slate); margin-bottom: 40px; font-size: var(--fz-heading);">Other Noteworthy Projects</h3>
+                <div class="projects-grid" id="projects-grid">
+                    <!-- Other projects will be loaded dynamically -->
+                    <div class="project-card fade-in">
+                        <div class="project-card-top">
+                            <div class="folder-icon">📁</div>
+                            <div class="project-card-links">
+                                <a href="#" aria-label="GitHub Link">
+                                    <svg xmlns="http://www.w3.org/2000/svg" role="img" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+                                        <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+                                    </svg>
+                                </a>
+                            </div>
+                        </div>
+                        <h3 class="project-card-title">Project Name</h3>
+                        <div class="project-card-description">
+                            <p>Add your other projects via the admin panel to display them in this grid layout.</p>
+                        </div>
+                        <ul class="project-card-tech">
+                            <li>JavaScript</li>
+                            <li>CSS</li>
+                            <li>HTML</li>
+                        </ul>
+                    </div>
+                </div>
+                <button class="show-more-btn" id="show-more-btn" style="display: none;">Show More</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact">
+        <div class="container fade-in">
+            <h2 class="contact-heading">What's Next?</h2>
+            <h2 class="contact-title">Get In Touch</h2>
+            <p class="contact-description">
+                Whether you have a question or just want to say hi,
+                I'll try my best to get back to you!
+            </p>
+
+            <form class="contact-form" id="contact-form">
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" id="name" name="name" required minlength="2" maxlength="100">
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="subject">Subject</label>
+                    <input type="text" id="subject" name="subject" maxlength="200">
+                </div>
+
+                <div class="form-group">
+                    <label for="message">Message</label>
+                    <textarea id="message" name="message" required minlength="10" maxlength="2000"></textarea>
+                </div>
+
+                <!-- Honeypot field (hidden from users, but bots will fill it) -->
+                <div class="honeypot">
+                    <label for="website">Website</label>
+                    <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+                </div>
+
+                <button type="submit" class="form-submit">Send Message</button>
+
+                <div class="form-message" id="form-message" style="display: none;"></div>
+            </form>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-text">
+            <p><a href="admin.html">Admin Panel</a></p>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script>
+        // Loader animation
+        window.addEventListener('load', () => {
+            const loader = document.querySelector('.loader-wrapper');
+            setTimeout(() => {
+                loader.classList.add('fade-out');
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                }, 600);
+            }, 2500); // Show loader for 2.5 seconds
+        });
+    </script>
+</body>
+</html>
