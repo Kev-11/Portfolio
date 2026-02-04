@@ -573,6 +573,43 @@ async def download_backup(filename: str, admin: str = Depends(auth.verify_admin)
         raise HTTPException(status_code=500, detail="Failed to download backup")
 
 
+@app.post("/api/admin/restore")
+async def restore_database(file: UploadFile = File(...), admin: str = Depends(auth.verify_admin)):
+    """Restore database from uploaded backup file (admin only)."""
+    try:
+        # Validate file extension
+        if not file.filename.endswith('.db'):
+            raise HTTPException(status_code=400, detail="Only .db files are allowed")
+        
+        # Read uploaded file
+        content = await file.read()
+        
+        # Create backup of current database first
+        current_backup = backup.create_backup()
+        logger.info(f"Created safety backup before restore: {current_backup['filename']}")
+        
+        # Get database path from environment
+        db_path = os.getenv('DATABASE_PATH', './backend/portfolio.db')
+        
+        # Write new database
+        with open(db_path, 'wb') as f:
+            f.write(content)
+        
+        logger.info(f"Admin {admin} restored database from {file.filename}")
+        
+        return {
+            "success": True,
+            "message": "Database restored successfully",
+            "backup_created": current_backup['filename']
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error downloading backup: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to download backup")
+
+
 @app.get("/api/admin/backups")
 async def list_backups(admin: str = Depends(auth.verify_admin)):
     """List all available backups (admin only)."""

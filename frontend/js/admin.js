@@ -98,6 +98,13 @@ function setupEventListeners() {
     
     // Backup button
     document.getElementById('backup-btn').addEventListener('click', handleBackup);
+    
+    // Restore button
+    document.getElementById('restore-btn').addEventListener('click', () => {
+        document.getElementById('restore-file-input').click();
+    });
+    
+    document.getElementById('restore-file-input').addEventListener('change', handleRestore);
 }
 
 // ==================== AUTHENTICATION ====================
@@ -1038,6 +1045,50 @@ async function handleBackup() {
     } catch (error) {
         console.error('Backup error:', error);
         showNotification('Failed to create backup', 'error');
+    }
+}
+
+async function handleRestore(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    if (!file.name.endsWith('.db')) {
+        alert('Please select a valid .db file');
+        return;
+    }
+    
+    if (!confirm('⚠️ WARNING: This will replace your current database with the uploaded file. A backup of the current database will be created automatically. Continue?')) {
+        event.target.value = ''; // Reset file input
+        return;
+    }
+    
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const response = await fetch(`${API_URL}/api/admin/restore`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Basic ${authToken}`
+            },
+            body: formData
+        });
+        
+        if (!response.ok) {
+            throw new Error('Restore failed');
+        }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert(`✅ Database restored successfully!\n\nBackup of old database: ${result.backup_created}\n\nThe page will reload to show the new data.`);
+            window.location.reload();
+        }
+    } catch (error) {
+        console.error('Restore error:', error);
+        alert('❌ Failed to restore database');
+    } finally {
+        event.target.value = ''; // Reset file input
     }
 }
 
