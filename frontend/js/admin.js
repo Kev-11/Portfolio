@@ -221,7 +221,8 @@ async function loadAllData() {
             loadExperience(),
             loadSkills(),
             loadAbout(),
-            loadContacts()
+            loadContacts(),
+            loadImages()
         ]);
     } catch (error) {
         console.error('Error loading data:', error);
@@ -1107,6 +1108,59 @@ function switchTab(tabName) {
     });
     document.getElementById(`tab-${tabName}`).classList.add('active');
 }
+
+// ==================== IMAGES MANAGEMENT ====================
+
+async function loadImages() {
+    try {
+        const images = await apiCall('/api/admin/images');
+        renderImagesGallery(images);
+    } catch (error) {
+        console.error('Error loading images:', error);
+        showNotification('Failed to load images', 'error');
+    }
+}
+
+function renderImagesGallery(images) {
+    const container = document.getElementById('images-gallery');
+    
+    if (images.length === 0) {
+        container.innerHTML = '<p style="color: var(--slate);">No images uploaded yet.</p>';
+        return;
+    }
+    
+    container.innerHTML = `
+        <div class="images-grid">
+            ${images.map(image => `
+                <div class="image-card">
+                    <img src="${API_URL}${image.url}" alt="${image.filename}" />
+                    <div class="image-info">
+                        <p class="image-filename">${image.filename}</p>
+                        <p class="image-size">${(image.size / 1024).toFixed(2)} KB</p>
+                        <button onclick="deleteImage('${image.filename}')" class="btn-delete-small" title="Delete">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+window.deleteImage = async function(filename) {
+    if (!confirm(`Are you sure you want to delete "${filename}"?\n\nThis action cannot be undone.`)) {
+        return;
+    }
+    
+    try {
+        await apiCall(`/api/admin/images/${filename}`, 'DELETE');
+        alert('Image deleted successfully');
+        loadImages();
+    } catch (error) {
+        console.error('Error deleting image:', error);
+        alert('Failed to delete image');
+    }
+};
 
 // ==================== NOTIFICATIONS ====================
 

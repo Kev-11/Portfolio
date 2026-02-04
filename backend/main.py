@@ -508,6 +508,31 @@ async def list_images(admin: str = Depends(auth.verify_admin)):
         raise HTTPException(status_code=500, detail="Failed to list images")
 
 
+@app.delete("/api/admin/images/{filename}")
+async def delete_image(filename: str, admin: str = Depends(auth.verify_admin)):
+    """Delete an image file (admin only)."""
+    try:
+        # Security check: ensure filename doesn't contain path traversal
+        if ".." in filename or "/" in filename or "\\" in filename:
+            raise HTTPException(status_code=400, detail="Invalid filename")
+        
+        file_path = static_dir / filename
+        
+        if not file_path.exists():
+            raise HTTPException(status_code=404, detail="Image not found")
+        
+        # Delete the file
+        file_path.unlink()
+        
+        logger.info(f"Admin {admin} deleted image: {filename}")
+        return {"message": "Image deleted successfully", "filename": filename}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting image: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to delete image")
+
 
 # ==================== ADMIN ENDPOINTS - AUTH ====================
 
