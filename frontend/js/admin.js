@@ -1082,7 +1082,7 @@ async function handleRestore(event) {
         
         if (result.success) {
             alert(`✅ Database restored successfully!\n\nBackup of old database: ${result.backup_created}\n\nThe page will reload to show the new data.`);
-            window.location.reload();
+            window.location.href = window.location.pathname;
         }
     } catch (error) {
         console.error('Restore error:', error);
