@@ -1,10 +1,6 @@
 {
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/frontend/$1"
-    }
-  ],
+  "buildCommand": "echo 'No build needed'",
+  "outputDirectory": "frontend",
   "headers": [
     {
       "source": "/(.*)",
