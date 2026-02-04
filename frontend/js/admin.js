@@ -2,7 +2,7 @@
 // API Base URL
 const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:8000'
-    : 'YOUR_BACKEND_URL'; // Replace with your Render backend URL
+    : 'https://portfolio-anuh.onrender.com';
 
 // State
 let authToken = sessionStorage.getItem('authToken') || null;
