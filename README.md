@@ -1,17 +1,35 @@
-# Portfolio Website
+# Kevin Patel's Portfolio
 
-A modern, production-ready portfolio website built with HTML, CSS, JavaScript (frontend), FastAPI (backend), and SQLite (database). Features a complete admin panel for managing content, contact form with email notifications, and automated database backups.
+A modern, animated portfolio website featuring a custom hexagonal logo, dynamic content management, and smooth animations inspired by Brittany Chiang's design.
 
 ## 🎨 Features
 
-- **Modern Dark Theme**: Exact color scheme from v4.brittanychiang.com
+### Design Elements
+- **Custom Hexagonal Logo**: SVG hexagon with "K" branding and subtle glow
+- **Side Navigation Panels**: 
+  - Left: Social links (GitHub, Instagram, LinkedIn)
+  - Right: Vertical email display (kevin.05.patel@gmail.com)
+- **Loading Animation**: Animated hexagon drawing with letter reveal and zoom transition
+- **Profile Photo**: Grayscale-to-color hover effect with 3D transform and shadow
+
+### Advanced Animations
+- Fade-in-up effects on scroll with cubic-bezier easing
+- Interactive hover transforms on buttons and images
+- Smooth transitions throughout the interface
+- Loading screen with SVG stroke animation
+
+### Content Management
+- **Full Admin Panel**: Complete CRUD operations for all content
+- **Multi-Image Support**: Projects can have single images or carousel galleries
+- **Contact Management**: View and delete contact form submissions
+- **Image Upload**: Drag & drop with automatic URL handling
+- **Database Backups**: One-click backup and download
+
+### Technical Features
+- **Modern Dark Theme**: Color scheme from v4.brittanychiang.com
 - **Responsive Design**: Mobile-first, works on all devices
-- **Dynamic Content**: All content managed via admin panel
-- **Contact Form**: With email notifications via SMTP
-- **Admin Panel**: Full CRUD operations for all content
-- **File Upload**: Image upload for projects
-- **Database Backup**: Automated backup and download
-- **Smooth Animations**: Scroll-triggered fade-in effects
+- **Email Notifications**: SMTP integration for contact form
+- **Rate Limiting**: Spam protection on contact submissions
 - **Production Ready**: Easy deployment to Vercel + Render
 
 ## 🚀 Quick Start
@@ -25,6 +43,7 @@ A modern, production-ready portfolio website built with HTML, CSS, JavaScript (f
 
 1. **Clone the repository**
    ```bash
+   git clone <your-repo-url>
    cd Portfolio
    ```
 
@@ -86,14 +105,15 @@ Portfolio/
 │   ├── admin.html         # Admin panel
 │   ├── css/
 │   │   ├── variables.css  # Color scheme & design tokens
-│   │   ├── styles.css     # Main portfolio styles
-│   │   └── admin.css      # Admin panel styles
+│   │   ├── styles.css     # Main styles with animations
+│   │   ├── admin.css      # Admin panel styles
+│   │   └── carousel.css   # Multi-image carousel styles
 │   ├── js/
-│   │   ├── main.js        # Main portfolio logic
-│   │   └── admin.js       # Admin panel logic
+│   │   ├── main.js        # Frontend logic & data fetching
+│   │   └── admin.js       # Admin CRUD operations
 │   └── assets/
-│       ├── images/        # Uploaded images
-│       └── resume.pdf     # Your resume (add your own)
+│       └── images/
+│           └── pfp.jpg    # Profile photo
 ├── backend/               # FastAPI backend
 │   ├── main.py           # FastAPI app & endpoints
 │   ├── database.py       # SQLite operations
@@ -157,11 +177,11 @@ ENVIRONMENT=development
 
 ### Via Admin Panel
 
-1. **Projects**: Add featured and regular projects with images, technologies, and links
-2. **Experience**: Add work history with company, role, dates, and responsibilities
+1. **Projects**: Add/edit projects with multiple images (carousel support), technologies, links, and descriptions
+2. **Experience**: Manage work history with company, role, dates, and responsibilities
 3. **Skills**: Add technical skills organized by category
 4. **About**: Update bio, current company, and role
-5. **Contacts**: View all contact form submissions
+5. **Contacts**: View and delete contact form submissions with email status tracking
 
 ### Direct Database Access
 
@@ -247,10 +267,11 @@ Edit `frontend/css/variables.css`:
 
 ### Add Your Photo
 
-1. **Via Admin Panel**: Upload image in Projects/Experience
-2. **Manual**: 
-   - Place image in `frontend/assets/images/profile.jpg`
-   - Uncomment CSS in `frontend/css/styles.css` (search for "To replace the placeholder")
+- Place your profile photo as `frontend/assets/images/pfp.jpg`
+- The photo displays with:
+  - Grayscale filter that removes on hover
+  - 3D transform effect with green shadow
+  - Automatic aspect ratio and border styling
 
 ### Update Resume
 
@@ -318,11 +339,23 @@ cp backend/portfolio.db backups/backup-$(date +%Y%m%d).db
 
 ## 📚 Tech Stack
 
-- **Frontend**: HTML5, CSS3, JavaScript (ES6+)
+### Core Technologies
+- **Frontend**: HTML5, CSS3, Vanilla JavaScript (ES6+)
 - **Backend**: Python, FastAPI, Uvicorn
 - **Database**: SQLite
 - **Email**: aiosmtplib (SMTP)
 - **Deployment**: Vercel (frontend), Render (backend)
+
+### Skills Featured
+- HTML, CSS, JavaScript
+- Python, FastAPI
+- SQLite, Git
+- Machine Learning libraries (scikit-learn, pandas, NumPy)
+
+### Design Inspiration
+- Color scheme and animations from v4.brittanychiang.com
+- Custom hexagonal branding
+- Interactive UI elements with smooth transitions
 
 ## 📄 License
 
@@ -332,10 +365,21 @@ This project is open source and available for personal use.
 
 Feel free to fork this project and customize it for your own portfolio!
 
-## 📧 Support
+## 🎯 Key Features Implemented
 
-For issues or questions, please open an issue on GitHub or use the contact form on the deployed site.
+- **Hexagonal Logo**: Custom SVG design with "K" letter
+- **Side Panels**: Social links (left) and vertical email (right)
+- **Animations**: Fade-in-up, hover effects, loading screen
+- **Multi-Image Projects**: Carousel support with navigation
+- **Contact Management**: Admin can view and delete submissions
+- **Profile Photo**: pfp.jpg with grayscale hover effect
+- **Custom Styling**: All numbered headings removed, clean modern design
+
+## 📧 Contact
+
+- **Email**: kevin.05.patel@gmail.com
+- **Social Links**: Available in side navigation panels
 
 ---
 
-**Built with ❤️ using modern web technologies**
+**Built with modern web technologies and attention to detail** ✨
