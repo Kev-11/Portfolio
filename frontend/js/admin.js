@@ -167,6 +167,10 @@ function showDashboard() {
 async function apiCall(endpoint, method = 'GET', body = null) {
     console.log(`[API] Calling ${method} ${endpoint}`);
     
+    if (endpoint.startsWith('/api/admin') && !authToken) {
+        throw new Error('Unauthorized');
+    }
+    
     const options = {
         method,
         headers: {
