@@ -2,7 +2,7 @@ services:
   - type: web
     name: portfolio-api
     env: python
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install -r requirements.txt && python seed_database.py
     startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: DATABASE_PATH
@@ -26,7 +26,7 @@ services:
       - key: ADMIN_PASSWORD
         sync: false
       - key: CORS_ORIGINS
-        sync: false
+        value: https://portfolio-kevpatz.vercel.app
       - key: ENVIRONMENT
         value: production
     disk:
