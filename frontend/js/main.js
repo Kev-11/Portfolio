@@ -4,6 +4,11 @@ const API_URL = window.location.hostname === 'localhost' || window.location.host
     ? 'http://localhost:8000'
     : 'https://portfolio-anuh.onrender.com';
 
+// EmailJS Configuration
+const EMAILJS_PUBLIC_KEY = 'ZQo7MVaEQ7zlSZs1v';
+const EMAILJS_SERVICE_ID = 'service_63oorub';
+const EMAILJS_TEMPLATE_ID = 'template_ozb9npl';
+
 // State
 let allProjects = [];
 let showingAllProjects = false;
@@ -378,12 +383,6 @@ function setupNavigation() {
 }
 
 // ==================== CONTACT FORM ====================
-
-// EmailJS Configuration
-// Replace these with your actual EmailJS credentials from https://www.emailjs.com/
-const EMAILJS_PUBLIC_KEY = 'ZQo7MVaEQ7zlSZs1v'; // Get from EmailJS Dashboard
-const EMAILJS_SERVICE_ID = 'service_63oorub'; // Get from EmailJS Dashboard
-const EMAILJS_TEMPLATE_ID = 'template_ozb9npl'; // Get from EmailJS Dashboard
 
 // Initialize EmailJS
 if (typeof emailjs !== 'undefined') {
