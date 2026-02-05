@@ -80,8 +80,9 @@ async function fetchAllData() {
 
 async function fetchProjects() {
     try {
+        console.log(`[API] Fetching projects from ${API_URL}/api/projects`);
         const response = await fetch(`${API_URL}/api/projects`);
-        if (!response.ok) throw new Error('Failed to fetch projects');
+        if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         return await response.json();
     } catch (error) {
         console.error('Error fetching projects:', error);
@@ -91,8 +92,9 @@ async function fetchProjects() {
 
 async function fetchExperience() {
     try {
+        console.log(`[API] Fetching experience from ${API_URL}/api/experience`);
         const response = await fetch(`${API_URL}/api/experience`);
-        if (!response.ok) throw new Error('Failed to fetch experience');
+        if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         return await response.json();
     } catch (error) {
         console.error('Error fetching experience:', error);
@@ -102,8 +104,9 @@ async function fetchExperience() {
 
 async function fetchSkills() {
     try {
+        console.log(`[API] Fetching skills from ${API_URL}/api/skills`);
         const response = await fetch(`${API_URL}/api/skills`);
-        if (!response.ok) throw new Error('Failed to fetch skills');
+        if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         return await response.json();
     } catch (error) {
         console.error('Error fetching skills:', error);
@@ -113,8 +116,9 @@ async function fetchSkills() {
 
 async function fetchAbout() {
     try {
+        console.log(`[API] Fetching about from ${API_URL}/api/about`);
         const response = await fetch(`${API_URL}/api/about`);
-        if (!response.ok) throw new Error('Failed to fetch about');
+        if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         const data = await response.json();
         return Object.keys(data).length > 0 ? data : null;
     } catch (error) {
