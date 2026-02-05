@@ -138,16 +138,16 @@ async def get_about():
 
 
 @app.post("/api/contact", response_model=models.MessageResponse)
-@limiter.limit("3/hour")
+@limiter.limit("100/hour")
 async def submit_contact(request: Request, contact: models.ContactRequest):
-    """Submit a contact form (rate limited to 3 per hour per IP)."""
+    """Submit a contact form (rate limited to 100 per hour per IP)."""
     try:
         # Get client IP
         client_ip = get_remote_address(request)
         
         # Additional rate limit check at database level
         recent_count = database.get_recent_submissions_by_ip(client_ip, hours=1)
-        if recent_count >= 3:
+        if recent_count >= 100:
             raise HTTPException(
                 status_code=429,
                 detail="Too many contact submissions. Please try again later."
@@ -162,17 +162,26 @@ async def submit_contact(request: Request, contact: models.ContactRequest):
             ip_address=client_ip
         )
         
-        # Send email asynchronously
-        email_sent = await email_service.send_contact_email(
-            name=contact.name,
-            email=contact.email,
-            message=contact.message,
-            subject=contact.subject
-        )
+        logger.info(f"Contact submission {submission_id} saved to database from {contact.email}")
         
-        # Update email sent status
-        if email_sent:
-            database.mark_email_sent(submission_id)
+        # Send email asynchronously
+        try:
+            email_sent = await email_service.send_contact_email(
+                name=contact.name,
+                email=contact.email,
+                message=contact.message,
+                subject=contact.subject
+            )
+            
+            # Update email sent status
+            if email_sent:
+                database.mark_email_sent(submission_id)
+                logger.info(f"Contact email {submission_id} sent successfully to Gmail")
+            else:
+                logger.warning(f"Contact email {submission_id} failed to send - check logs above for details")
+        except Exception as email_error:
+            logger.error(f"Exception while sending email for submission {submission_id}: {str(email_error)}")
+            email_sent = False
         
         logger.info(f"Contact form submitted by {contact.email} (Email sent: {email_sent})")
         
@@ -644,6 +653,28 @@ async def list_backups(admin: str = Depends(auth.verify_admin)):
     except Exception as e:
         logger.error(f"Error listing backups: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to list backups")
+
+
+@app.post("/api/admin/test-email")
+async def test_email(admin: str = Depends(auth.verify_admin)):
+    """Test email configuration by sending a test email (admin only)."""
+    try:
+        logger.info(f"Admin {admin} requested test email")
+        email_sent = await email_service.send_test_email()
+        
+        if email_sent:
+            return {
+                "success": True,
+                "message": f"Test email sent successfully to {email_service.SMTP_TO_EMAIL}"
+            }
+        else:
+            return {
+                "success": False,
+                "message": "Failed to send test email. Check server logs for details."
+            }
+    except Exception as e:
+        logger.error(f"Error sending test email: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Test email failed: {str(e)}")
 
 
 if __name__ == "__main__":

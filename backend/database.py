@@ -454,15 +454,23 @@ def mark_email_sent(submission_id: int) -> bool:
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    cursor.execute("""
-        UPDATE contact_submissions 
-        SET email_sent = 1, email_sent_at = CURRENT_TIMESTAMP 
-        WHERE id = ?
-    """, (submission_id,))
-    
-    updated = cursor.rowcount > 0
-    conn.commit()
-    conn.close()
+    try:
+        cursor.execute("""
+            UPDATE contact_submissions 
+            SET email_sent = 1, email_sent_at = CURRENT_TIMESTAMP 
+            WHERE id = ?
+        """, (submission_id,))
+        
+        updated = cursor.rowcount > 0
+        conn.commit()
+        print(f"Contact submission {submission_id} marked as email sent")
+        return updated
+    except Exception as e:
+        print(f"Error marking email as sent: {e}")
+        conn.rollback()
+        return False
+    finally:
+        conn.close()
     return updated
 
 

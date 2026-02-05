@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
 SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
 SMTP_USERNAME = os.getenv("SMTP_USERNAME")
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "").replace(" ", "") if os.getenv("SMTP_PASSWORD") else None
 SMTP_FROM_EMAIL = os.getenv("SMTP_FROM_EMAIL")
 SMTP_TO_EMAIL = os.getenv("SMTP_TO_EMAIL")
 
@@ -30,7 +30,13 @@ async def send_contact_email(name: str, email: str, message: str, subject: str =
     """
     if not all([SMTP_USERNAME, SMTP_PASSWORD, SMTP_FROM_EMAIL, SMTP_TO_EMAIL]):
         logger.error("SMTP configuration is incomplete. Check environment variables.")
+        logger.error(f"SMTP_USERNAME: {SMTP_USERNAME is not None}")
+        logger.error(f"SMTP_PASSWORD: {SMTP_PASSWORD is not None}")
+        logger.error(f"SMTP_FROM_EMAIL: {SMTP_FROM_EMAIL is not None}")
+        logger.error(f"SMTP_TO_EMAIL: {SMTP_TO_EMAIL is not None}")
         return False
+    
+    logger.info(f"Attempting to send email from {email} via {SMTP_HOST}:{SMTP_PORT}")
     
     try:
         # Create message
@@ -99,7 +105,9 @@ Reply to this email to respond directly to {email}.
         msg.attach(part1)
         msg.attach(part2)
         
-        # Send email
+        logger.info(f"Connecting to SMTP server {SMTP_HOST}:{SMTP_PORT}...")
+        
+        # Send email with timeout
         await aiosmtplib.send(
             msg,
             hostname=SMTP_HOST,
@@ -107,13 +115,23 @@ Reply to this email to respond directly to {email}.
             username=SMTP_USERNAME,
             password=SMTP_PASSWORD,
             start_tls=True,
+            timeout=30,  # 30 second timeout
         )
         
-        logger.info(f"Contact email sent successfully from {email}")
+        logger.info(f"Contact email sent successfully from {email} to {SMTP_TO_EMAIL}")
         return True
         
+    except aiosmtplib.SMTPAuthenticationError as e:
+        logger.error(f"SMTP Authentication failed: {str(e)}")
+        logger.error("Check your Gmail App Password is correct")
+        return False
+    except aiosmtplib.SMTPException as e:
+        logger.error(f"SMTP error sending email: {str(e)}")
+        return False
     except Exception as e:
-        logger.error(f"Failed to send contact email: {str(e)}")
+        logger.error(f"Failed to send contact email: {type(e).__name__}: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
         return False
 
 
