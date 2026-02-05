@@ -637,7 +637,8 @@ async def download_backup(filename: str, admin: str = Depends(auth.verify_admin)
 
 @app.post("/api/admin/restore")
 async def restore_database(file: UploadFile = File(...), admin: str = Depends(auth.verify_admin)):
-    """Restore database from uploaded backup file (admin only)."""
+    """Restore database from uploaded backup file (admin only).
+    Completely replaces existing data and ensures it's properly saved."""
     try:
         # Validate file extension
         if not file.filename.endswith('.db'):
@@ -646,36 +647,63 @@ async def restore_database(file: UploadFile = File(...), admin: str = Depends(au
         # Read uploaded file
         content = await file.read()
         
+        # Validate file is not empty
+        if len(content) == 0:
+            raise HTTPException(status_code=400, detail="Uploaded file is empty")
+        
         # Create backup of current database first
         current_backup = backup.create_backup()
         logger.info(f"Created safety backup before restore: {current_backup['filename']}")
         
-        # Close all active database connections
+        # Step 1: Force checkpoint and close all connections
+        logger.info("Checkpointing and closing all database connections...")
+        database.checkpoint_wal()
         database.close_all_connections()
         
-        # Remove WAL and SHM files to prevent stale data
+        # Step 2: Remove WAL and SHM files to prevent stale data
+        logger.info("Removing WAL and SHM files...")
         database.cleanup_wal_files()
         
         # Get database path from environment
         db_path = os.getenv('DATABASE_PATH', './backend/portfolio.db')
         
-        # Write new database
+        # Step 3: Delete existing database file for complete replacement
+        if os.path.exists(db_path):
+            os.remove(db_path)
+            logger.info(f"Removed existing database: {db_path}")
+        
+        # Step 4: Write new database file
         with open(db_path, 'wb') as f:
             f.write(content)
+        logger.info(f"Written new database: {len(content)} bytes")
+        
+        # Step 5: Force WAL checkpoint on new database to ensure data is written
+        database.checkpoint_wal()
+        
+        # Step 6: Verify database integrity
+        health = database.verify_database_integrity()
+        if not health["healthy"]:
+            logger.error(f"Restored database failed integrity check: {health['message']}")
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Database integrity check failed: {health['message']}"
+            )
         
         logger.info(f"Admin {admin} restored database from {file.filename}")
         
         return {
             "success": True,
             "message": "Database restored successfully",
-            "backup_created": current_backup['filename']
+            "backup_created": current_backup['filename'],
+            "integrity_check": "passed",
+            "bytes_written": len(content)
         }
         
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error restoring database: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to restore database")
+        raise HTTPException(status_code=500, detail=f"Failed to restore database: {str(e)}")
 
 
 @app.post("/api/admin/seed")

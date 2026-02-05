@@ -107,6 +107,7 @@ def list_backups() -> list:
 def restore_backup(backup_filename: str) -> dict:
     """
     Restore database from a backup file.
+    Completely replaces existing data and ensures it's properly saved.
     
     Args:
         backup_filename: Name of the backup file to restore
@@ -132,21 +133,44 @@ def restore_backup(backup_filename: str) -> dict:
         # Import here to avoid circular dependency
         from backend import database
         
-        # Close all active connections
+        # Step 1: Force checkpoint and close all connections
+        logger.info("Checkpointing and closing all database connections...")
+        database.checkpoint_wal()
         database.close_all_connections()
         
-        # Remove WAL and SHM files before restore
+        # Step 2: Remove WAL and SHM files to ensure clean slate
+        logger.info("Removing WAL and SHM files...")
         database.cleanup_wal_files()
         
-        # Restore the backup
-        shutil.copy2(backup_path, DATABASE_PATH)
+        # Step 3: Delete existing database file
+        if os.path.exists(DATABASE_PATH):
+            os.remove(DATABASE_PATH)
+            logger.info(f"Removed existing database: {DATABASE_PATH}")
         
-        logger.info(f"Database restored from backup: {backup_filename}")
+        # Step 4: Copy backup to database location (complete replacement)
+        shutil.copy2(backup_path, DATABASE_PATH)
+        logger.info(f"Copied backup to: {DATABASE_PATH}")
+        
+        # Step 5: Force WAL checkpoint on new database to ensure data is written
+        database.checkpoint_wal()
+        
+        # Step 6: Verify database integrity
+        health = database.verify_database_integrity()
+        if not health["healthy"]:
+            logger.error(f"Restored database failed integrity check: {health['message']}")
+            return {
+                "success": False,
+                "error": f"Database integrity check failed: {health['message']}",
+                "safety_backup": current_backup.get("filename")
+            }
+        
+        logger.info(f"Database restored successfully from backup: {backup_filename}")
         
         return {
             "success": True,
             "message": f"Database restored from {backup_filename}",
-            "safety_backup": current_backup.get("filename")
+            "safety_backup": current_backup.get("filename"),
+            "integrity_check": "passed"
         }
         
     except Exception as e:
