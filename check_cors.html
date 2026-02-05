@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CORS Diagnostics</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-top: 0;
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            border: 1px solid #dee2e6;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Portfolio Backend CORS Diagnostics</h1>
+        
+        <div class="info">
+            <strong>Backend URL:</strong> https://portfolio-anuh.onrender.com<br>
+            <strong>Frontend URL:</strong> <span id="current-origin"></span>
+        </div>
+
+        <div class="test-section">
+            <h2>Quick Tests</h2>
+            <button onclick="testHealth()">Test Health Endpoint</button>
+            <button onclick="testProjects()">Test Projects API</button>
+            <button onclick="testCORS()">Test CORS Headers</button>
+            <button onclick="runAllTests()">Run All Tests</button>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const API_URL = 'https://portfolio-anuh.onrender.com';
+        const resultsDiv = document.getElementById('results');
+        document.getElementById('current-origin').textContent = window.location.origin;
+
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.innerHTML = message;
+            resultsDiv.appendChild(div);
+        }
+
+        function clear() {
+            resultsDiv.innerHTML = '';
+        }
+
+        async function testHealth() {
+            clear();
+            log('Testing health endpoint...', 'info');
+            
+            try {
+                const response = await fetch(`${API_URL}/api/health`);
+                const data = await response.json();
+                
+                log(`✅ Health Check: ${data.status}<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'success');
+                
+                // Check CORS headers
+                const corsHeader = response.headers.get('Access-Control-Allow-Origin');
+                if (corsHeader) {
+                    log(`✅ CORS Header Found: ${corsHeader}`, 'success');
+                } else {
+                    log(`❌ CORS Header Missing!`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Health check failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testProjects() {
+            clear();
+            log('Testing projects endpoint...', 'info');
+            
+            try {
+                const response = await fetch(`${API_URL}/api/projects`);
+                const data = await response.json();
+                
+                log(`✅ Projects loaded: ${data.length} projects found<br><pre>${JSON.stringify(data.slice(0, 2), null, 2)}</pre>`, 'success');
+            } catch (error) {
+                log(`❌ Projects fetch failed: ${error.message}<br><br>This usually means CORS is blocking the request.`, 'error');
+            }
+        }
+
+        async function testCORS() {
+            clear();
+            log('Testing CORS configuration...', 'info');
+            
+            try {
+                const response = await fetch(`${API_URL}/api/health`, {
+                    method: 'OPTIONS',
+                    headers: {
+                        'Origin': window.location.origin,
+                        'Access-Control-Request-Method': 'GET'
+                    }
+                });
+                
+                const allowOrigin = response.headers.get('Access-Control-Allow-Origin');
+                const allowMethods = response.headers.get('Access-Control-Allow-Methods');
+                const allowHeaders = response.headers.get('Access-Control-Allow-Headers');
+                
+                if (allowOrigin) {
+                    log(`✅ Access-Control-Allow-Origin: ${allowOrigin}`, 'success');
+                } else {
+                    log(`❌ Access-Control-Allow-Origin header is missing!`, 'error');
+                }
+                
+                if (allowMethods) {
+                    log(`✅ Access-Control-Allow-Methods: ${allowMethods}`, 'success');
+                }
+                
+                if (allowHeaders) {
+                    log(`✅ Access-Control-Allow-Headers: ${allowHeaders}`, 'success');
+                }
+                
+                if (!allowOrigin) {
+                    log(`<br><strong>⚠️ CORS is not configured correctly!</strong><br><br>
+                        <strong>Fix:</strong><br>
+                        1. Go to Render Dashboard → portfolio-api<br>
+                        2. Environment tab → Add/Edit CORS_ORIGINS<br>
+                        3. Set value to: <code>${window.location.origin}</code><br>
+                        4. Save and redeploy`, 'error');
+                }
+            } catch (error) {
+                log(`❌ CORS test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function runAllTests() {
+            clear();
+            log('Running all diagnostic tests...', 'info');
+            
+            await testHealth();
+            await new Promise(r => setTimeout(r, 1000));
+            await testProjects();
+            await new Promise(r => setTimeout(r, 1000));
+            await testCORS();
+        }
+
+        // Auto-run on load
+        window.addEventListener('load', () => {
+            setTimeout(testHealth, 500);
+        });
+    </script>
+</body>
+</html>
