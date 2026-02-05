@@ -123,17 +123,6 @@ async def health_check():
         }
 
 
-@app.get("/api/test-image/{filename}")
-async def test_image(filename: str):
-    """Test endpoint to verify image serving."""
-    from pathlib import Path
-    img_path = Path("frontend/assets/images") / filename
-    if img_path.exists():
-        return {"exists": True, "path": str(img_path), "url": f"/uploads/{filename}"}
-    else:
-        return {"exists": False, "path": str(img_path)}
-
-
 # ==================== PUBLIC ENDPOINTS ====================
 
 @app.get("/api/projects", response_model=List[models.Project])

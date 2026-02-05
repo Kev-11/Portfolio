@@ -10,10 +10,8 @@ import time
 DATABASE_PATH = os.getenv("DATABASE_PATH", "./backend/portfolio.db")
 logger = logging.getLogger(__name__)
 
-# Connection pool for 24/7 availability
-_connection_pool = []
+# Connection management
 _pool_lock = threading.Lock()
-_pool_size = 10
 _last_checkpoint = time.time()
 _checkpoint_interval = 300  # 5 minutes
 
@@ -67,15 +65,14 @@ def get_db_connection():
 
 def close_all_connections():
     """Close all database connections. Call this after database restore."""
-    global _connection_pool
-    with _pool_lock:
-        for conn in _connection_pool:
-            try:
-                conn.close()
-            except:
-                pass
-        _connection_pool.clear()
-    logger.info("All database connections closed")
+    # Force SQLite to close all connections by checkpointing WAL
+    try:
+        conn = sqlite3.connect(DATABASE_PATH, timeout=5.0)
+        conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+        conn.close()
+        logger.info("All database connections closed")
+    except Exception as e:
+        logger.warning(f"Error closing connections: {e}")
 
 
 def cleanup_wal_files():
