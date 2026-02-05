@@ -9,9 +9,10 @@ DATABASE_PATH = os.getenv("DATABASE_PATH", "./backend/portfolio.db")
 
 def get_db_connection():
     """Get a database connection."""
-    conn = sqlite3.connect(DATABASE_PATH, isolation_level=None)
+    conn = sqlite3.connect(DATABASE_PATH, timeout=10.0, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA synchronous=NORMAL")
     return conn
 
 
@@ -102,9 +103,14 @@ def init_db():
         )
     """)
 
-    conn.commit()
-    conn.close()
-    print(f"Database initialized at {DATABASE_PATH}")
+    try:
+        conn.commit()
+        print(f"Database initialized at {DATABASE_PATH}")
+    except Exception as e:
+        print(f"Error committing database initialization: {e}")
+        conn.rollback()
+    finally:
+        conn.close()
 
 
 # ==================== PROJECTS CRUD ====================
@@ -130,8 +136,15 @@ def create_project(title: str, description: str, technologies: List[str],
           is_featured, display_order))
     
     project_id = cursor.lastrowid
-    conn.commit()
-    conn.close()
+    try:
+        conn.commit()
+        print(f"Project '{title}' (ID: {project_id}) successfully saved to database at {DATABASE_PATH}")
+    except Exception as e:
+        print(f"Error saving project: {e}")
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
     return project_id
 
 
