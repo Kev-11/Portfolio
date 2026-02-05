@@ -637,28 +637,6 @@ async def list_backups(admin: str = Depends(auth.verify_admin)):
         raise HTTPException(status_code=500, detail="Failed to list backups")
 
 
-@app.post("/api/admin/test-email")
-async def test_email(admin: str = Depends(auth.verify_admin)):
-    """Test email configuration by sending a test email (admin only)."""
-    try:
-        logger.info(f"Admin {admin} requested test email")
-        email_sent = await email_service.send_test_email()
-        
-        if email_sent:
-            return {
-                "success": True,
-                "message": f"Test email sent successfully to {email_service.SMTP_TO_EMAIL}"
-            }
-        else:
-            return {
-                "success": False,
-                "message": "Failed to send test email. Check server logs for details."
-            }
-    except Exception as e:
-        logger.error(f"Error sending test email: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Test email failed: {str(e)}")
-
-
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

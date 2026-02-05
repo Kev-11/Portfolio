@@ -96,9 +96,6 @@ function setupEventListeners() {
     // File upload
     setupFileUpload();
     
-    // Test email button
-    document.getElementById('test-email-btn').addEventListener('click', handleTestEmail);
-    
     // Backup button
     document.getElementById('backup-btn').addEventListener('click', handleBackup);
     
@@ -1033,32 +1030,6 @@ function setupFileUpload() {
     
     // Initialize rendering if project is being edited
     window.renderSelectedImages = renderSelectedImages;
-}
-
-// ==================== EMAIL TESTING ====================
-
-async function handleTestEmail() {
-    const btn = document.getElementById('test-email-btn');
-    const originalText = btn.textContent;
-    
-    try {
-        btn.textContent = 'Sending...';
-        btn.disabled = true;
-        
-        const result = await apiCall('/api/admin/test-email', 'POST');
-        
-        if (result.success) {
-            showNotification(result.message, 'success');
-        } else {
-            showNotification(result.message, 'error');
-        }
-    } catch (error) {
-        console.error('Test email error:', error);
-        showNotification('Failed to send test email. Check server logs.', 'error');
-    } finally {
-        btn.textContent = originalText;
-        btn.disabled = false;
-    }
 }
 
 // ==================== BACKUP ====================
