@@ -164,26 +164,8 @@ async def submit_contact(request: Request, contact: models.ContactRequest):
         
         logger.info(f"Contact submission {submission_id} saved to database from {contact.email}")
         
-        # Send email asynchronously
-        try:
-            email_sent = await email_service.send_contact_email(
-                name=contact.name,
-                email=contact.email,
-                message=contact.message,
-                subject=contact.subject
-            )
-            
-            # Update email sent status
-            if email_sent:
-                database.mark_email_sent(submission_id)
-                logger.info(f"Contact email {submission_id} sent successfully to Gmail")
-            else:
-                logger.warning(f"Contact email {submission_id} failed to send - check logs above for details")
-        except Exception as email_error:
-            logger.error(f"Exception while sending email for submission {submission_id}: {str(email_error)}")
-            email_sent = False
-        
-        logger.info(f"Contact form submitted by {contact.email} (Email sent: {email_sent})")
+        # Email sending is now handled by EmailJS on the frontend
+        # This backend endpoint is only for database logging
         
         return models.MessageResponse(
             message="Thank you for your message! I'll get back to you soon.",

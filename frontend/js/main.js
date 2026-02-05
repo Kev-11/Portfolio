@@ -379,6 +379,17 @@ function setupNavigation() {
 
 // ==================== CONTACT FORM ====================
 
+// EmailJS Configuration
+// Replace these with your actual EmailJS credentials from https://www.emailjs.com/
+const EMAILJS_PUBLIC_KEY = ZQo7MVaEQ7zlSZs1v; // Get from EmailJS Dashboard
+const EMAILJS_SERVICE_ID = service_63oorub; // Get from EmailJS Dashboard
+const EMAILJS_TEMPLATE_ID = template_ozb9npl; // Get from EmailJS Dashboard
+
+// Initialize EmailJS
+if (typeof emailjs !== 'undefined') {
+    emailjs.init(EMAILJS_PUBLIC_KEY);
+}
+
 function setupContactForm() {
     const form = document.getElementById('contact-form');
     const submitBtn = form.querySelector('.form-submit');
@@ -413,22 +424,38 @@ function setupContactForm() {
         messageDiv.style.display = 'none';
         
         try {
-            const response = await fetch(`${API_URL}/api/contact`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData)
-            });
-            
-            const data = await response.json();
-            
-            if (response.ok) {
-                showMessage(data.message || 'Thank you for your message! I\'ll get back to you soon.', 'success');
-                form.reset();
-            } else {
-                showMessage(data.detail || 'Something went wrong. Please try again.', 'error');
+            // Save to database first (backend)
+            try {
+                await fetch(`${API_URL}/api/contact`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+            } catch (dbError) {
+                console.warn('Failed to save to database:', dbError);
+                // Continue with email sending even if database save fails
             }
+            
+            // Send email using EmailJS
+            const templateParams = {
+                from_name: formData.name,
+                from_email: formData.email,
+                subject: formData.subject || 'Portfolio Contact',
+                message: formData.message,
+                to_email: 'ultkev0@gmail.com' // Your email where you want to receive messages
+            };
+            
+            await emailjs.send(
+                EMAILJS_SERVICE_ID,
+                EMAILJS_TEMPLATE_ID,
+                templateParams
+            );
+            
+            showMessage('Thank you for your message! I\'ll get back to you soon.', 'success');
+            form.reset();
+            
         } catch (error) {
             console.error('Error submitting form:', error);
             showMessage('Failed to send message. Please try again later.', 'error');
