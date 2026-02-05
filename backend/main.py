@@ -76,6 +76,18 @@ async def startup_event():
         health = database.verify_database_integrity()
         if health["healthy"]:
             logger.info("Application started successfully - database is healthy")
+            
+            # Auto-seed if database is empty
+            try:
+                projects = database.get_all_projects()
+                if len(projects) == 0:
+                    logger.info("Database is empty - running auto-seed...")
+                    import subprocess
+                    import sys
+                    subprocess.run([sys.executable, "seed_database.py"], check=True)
+                    logger.info("Database auto-seeded successfully")
+            except Exception as e:
+                logger.warning(f"Auto-seed check failed: {e}")
         else:
             logger.warning(f"Application started but database health check failed: {health['message']}")
     except Exception as e:
@@ -664,6 +676,39 @@ async def restore_database(file: UploadFile = File(...), admin: str = Depends(au
     except Exception as e:
         logger.error(f"Error restoring database: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to restore database")
+
+
+@app.post("/api/admin/seed")
+async def seed_database(admin: str = Depends(auth.verify_admin)):
+    """Manually seed the database with sample data (admin only)."""
+    try:
+        import subprocess
+        import sys
+        
+        # Run seed script
+        result = subprocess.run(
+            [sys.executable, "seed_database.py"],
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+        
+        if result.returncode == 0:
+            logger.info(f"Admin {admin} manually seeded the database")
+            return {
+                "success": True,
+                "message": "Database seeded successfully",
+                "output": result.stdout
+            }
+        else:
+            logger.error(f"Seeding failed: {result.stderr}")
+            raise HTTPException(status_code=500, detail=f"Seeding failed: {result.stderr}")
+            
+    except subprocess.TimeoutExpired:
+        raise HTTPException(status_code=500, detail="Seeding timeout - operation took too long")
+    except Exception as e:
+        logger.error(f"Error seeding database: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to seed database")
 
 
 @app.get("/api/admin/backups")
