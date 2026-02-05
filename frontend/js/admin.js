@@ -1045,9 +1045,7 @@ async function handleTestEmail() {
         btn.textContent = 'Sending...';
         btn.disabled = true;
         
-        const result = await apiCall('/api/admin/test-email', {
-            method: 'POST'
-        });
+        const result = await apiCall('/api/admin/test-email', 'POST');
         
         if (result.success) {
             showNotification(result.message, 'success');
