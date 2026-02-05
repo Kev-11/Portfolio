@@ -66,6 +66,7 @@ A modern, animated portfolio website featuring a custom hexagonal logo, dynamic 
    ```
    
    Edit `.env` and add your configuration:
+   - MongoDB connection (`MONGODB_URI`, `MONGODB_DB`)
    - SMTP credentials (Gmail app password)
    - Admin username and password
    - CORS origins
@@ -116,7 +117,7 @@ Portfolio/
 │           └── pfp.jpg    # Profile photo
 ├── backend/               # FastAPI backend
 │   ├── main.py           # FastAPI app & endpoints
-│   ├── database.py       # SQLite operations
+│   ├── database.py       # MongoDB operations
 │   ├── models.py         # Pydantic models
 │   ├── auth.py           # Authentication
 │   ├── email_service.py  # SMTP email sending
@@ -141,7 +142,8 @@ Required variables in `.env`:
 
 ```bash
 # Database
-DATABASE_PATH=./backend/portfolio.db
+MONGODB_URI=mongodb://localhost:27017
+MONGODB_DB=portfolio
 
 # SMTP (Gmail)
 SMTP_HOST=smtp.gmail.com
@@ -185,20 +187,7 @@ ENVIRONMENT=development
 
 ### Direct Database Access
 
-You can also manage data directly via SQLite:
-
-```bash
-sqlite3 backend/portfolio.db
-
-# View tables
-.tables
-
-# Query data
-SELECT * FROM projects;
-
-# Exit
-.quit
-```
+Use MongoDB tools (e.g., `mongosh`) to inspect collections in the `portfolio` database.
 
 ## 🌐 Deployment
 
@@ -306,7 +295,7 @@ Backups are automatically created when you click "Download Backup" in admin pane
 
 Manual backup:
 ```bash
-cp backend/portfolio.db backups/backup-$(date +%Y%m%d).db
+# Use the admin panel backup button or copy the JSON backups from ./backups
 ```
 
 ## 🐛 Troubleshooting
@@ -342,14 +331,14 @@ cp backend/portfolio.db backups/backup-$(date +%Y%m%d).db
 ### Core Technologies
 - **Frontend**: HTML5, CSS3, Vanilla JavaScript (ES6+)
 - **Backend**: Python, FastAPI, Uvicorn
-- **Database**: SQLite
+- **Database**: MongoDB
 - **Email**: aiosmtplib (SMTP)
 - **Deployment**: Vercel (frontend), Render (backend)
 
 ### Skills Featured
 - HTML, CSS, JavaScript
 - Python, FastAPI
-- SQLite, Git
+- MongoDB, Git
 - Machine Learning libraries (scikit-learn, pandas, NumPy)
 
 ### Design Inspiration

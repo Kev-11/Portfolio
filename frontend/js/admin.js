@@ -1053,8 +1053,8 @@ async function handleRestore(event) {
     const file = event.target.files[0];
     if (!file) return;
     
-    if (!file.name.endsWith('.db')) {
-        alert('Please select a valid .db file');
+    if (!file.name.endsWith('.json')) {
+        alert('Please select a valid .json file');
         return;
     }
     

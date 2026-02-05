@@ -71,15 +71,15 @@ app.mount("/uploads", StaticFiles(directory=str(static_dir)), name="uploads")
 @app.on_event("startup")
 async def startup_event():
     try:
-        database.init_db()
+        await database.init_db()
         # Verify database integrity on startup
-        health = database.verify_database_integrity()
+        health = await database.verify_database_integrity()
         if health["healthy"]:
             logger.info("Application started successfully - database is healthy")
             
             # Auto-seed if database is empty
             try:
-                projects = database.get_all_projects()
+                projects = await database.get_all_projects()
                 if len(projects) == 0:
                     logger.info("Database is empty - running auto-seed...")
                     import subprocess
@@ -118,7 +118,7 @@ async def start_periodic_checkpoint():
 async def health_check():
     """Health check endpoint for deployment monitoring with database verification."""
     try:
-        db_health = database.verify_database_integrity()
+        db_health = await database.verify_database_integrity()
         return {
             "status": "healthy" if db_health["healthy"] else "degraded",
             "message": "API is running",
@@ -141,7 +141,7 @@ async def health_check():
 async def get_projects(featured: Optional[bool] = None):
     """Get all projects, optionally filtered by featured status."""
     try:
-        projects = database.get_all_projects(featured_only=featured if featured else False)
+        projects = await database.get_all_projects(featured_only=featured if featured else False)
         return projects
     except Exception as e:
         logger.error(f"Error fetching projects: {str(e)}")
@@ -152,7 +152,7 @@ async def get_projects(featured: Optional[bool] = None):
 async def get_experience():
     """Get all work experience entries."""
     try:
-        experiences = database.get_all_experience()
+        experiences = await database.get_all_experience()
         return experiences
     except Exception as e:
         logger.error(f"Error fetching experience: {str(e)}")
@@ -163,7 +163,7 @@ async def get_experience():
 async def get_skills():
     """Get all skills."""
     try:
-        skills = database.get_all_skills()
+        skills = await database.get_all_skills()
         return skills
     except Exception as e:
         logger.error(f"Error fetching skills: {str(e)}")
@@ -174,7 +174,7 @@ async def get_skills():
 async def get_about():
     """Get about section information."""
     try:
-        about = database.get_about()
+        about = await database.get_about()
         if not about:
             return {}  # Return empty object if no about section exists
         return about
@@ -192,7 +192,7 @@ async def submit_contact(request: Request, contact: models.ContactRequest):
         client_ip = get_remote_address(request)
         
         # Additional rate limit check at database level
-        recent_count = database.get_recent_submissions_by_ip(client_ip, hours=1)
+        recent_count = await database.get_recent_submissions_by_ip(client_ip, hours=1)
         if recent_count >= 100:
             raise HTTPException(
                 status_code=429,
@@ -200,7 +200,7 @@ async def submit_contact(request: Request, contact: models.ContactRequest):
             )
         
         # Save to database first
-        submission_id = database.create_contact_submission(
+        submission_id = await database.create_contact_submission(
             name=contact.name,
             email=contact.email,
             subject=contact.subject,
@@ -236,7 +236,7 @@ async def submit_contact(request: Request, contact: models.ContactRequest):
 async def create_project(project: models.ProjectCreate, admin: str = Depends(auth.verify_admin)):
     """Create a new project (admin only)."""
     try:
-        project_id = database.create_project(
+        project_id = await database.create_project(
             title=project.title,
             description=project.description,
             technologies=project.technologies,
@@ -246,7 +246,7 @@ async def create_project(project: models.ProjectCreate, admin: str = Depends(aut
             is_featured=project.is_featured,
             display_order=project.display_order
         )
-        created_project = database.get_project_by_id(project_id)
+        created_project = await database.get_project_by_id(project_id)
         logger.info(f"Admin {admin} created project: {project.title}")
         return created_project
     except Exception as e:
@@ -265,11 +265,11 @@ async def update_project(project_id: int, project: models.ProjectUpdate,
         if not update_data:
             raise HTTPException(status_code=400, detail="No fields to update")
         
-        success = database.update_project(project_id, **update_data)
+        success = await database.update_project(project_id, **update_data)
         if not success:
             raise HTTPException(status_code=404, detail="Project not found")
         
-        updated_project = database.get_project_by_id(project_id)
+        updated_project = await database.get_project_by_id(project_id)
         logger.info(f"Admin {admin} updated project ID {project_id}")
         return updated_project
     except HTTPException:
@@ -283,7 +283,7 @@ async def update_project(project_id: int, project: models.ProjectUpdate,
 async def delete_project(project_id: int, admin: str = Depends(auth.verify_admin)):
     """Delete a project (admin only)."""
     try:
-        success = database.delete_project(project_id)
+        success = await database.delete_project(project_id)
         if not success:
             raise HTTPException(status_code=404, detail="Project not found")
         
@@ -303,7 +303,7 @@ async def create_experience(experience: models.ExperienceCreate,
                            admin: str = Depends(auth.verify_admin)):
     """Create a new experience entry (admin only)."""
     try:
-        exp_id = database.create_experience(
+        exp_id = await database.create_experience(
             company=experience.company,
             company_url=experience.company_url,
             role=experience.role,
@@ -311,7 +311,7 @@ async def create_experience(experience: models.ExperienceCreate,
             responsibilities=experience.responsibilities,
             display_order=experience.display_order
         )
-        created_exp = database.get_experience_by_id(exp_id)
+        created_exp = await database.get_experience_by_id(exp_id)
         logger.info(f"Admin {admin} created experience: {experience.company}")
         return created_exp
     except Exception as e:
@@ -329,11 +329,11 @@ async def update_experience(experience_id: int, experience: models.ExperienceUpd
         if not update_data:
             raise HTTPException(status_code=400, detail="No fields to update")
         
-        success = database.update_experience(experience_id, **update_data)
+        success = await database.update_experience(experience_id, **update_data)
         if not success:
             raise HTTPException(status_code=404, detail="Experience not found")
         
-        updated_exp = database.get_experience_by_id(experience_id)
+        updated_exp = await database.get_experience_by_id(experience_id)
         logger.info(f"Admin {admin} updated experience ID {experience_id}")
         return updated_exp
     except HTTPException:
@@ -347,7 +347,7 @@ async def update_experience(experience_id: int, experience: models.ExperienceUpd
 async def delete_experience(experience_id: int, admin: str = Depends(auth.verify_admin)):
     """Delete an experience entry (admin only)."""
     try:
-        success = database.delete_experience(experience_id)
+        success = await database.delete_experience(experience_id)
         if not success:
             raise HTTPException(status_code=404, detail="Experience not found")
         
@@ -366,11 +366,11 @@ async def delete_experience(experience_id: int, admin: str = Depends(auth.verify
 async def create_skill(skill: models.SkillCreate, admin: str = Depends(auth.verify_admin)):
     """Create a new skill (admin only)."""
     try:
-        skill_id = database.create_skill(name=skill.name, category=skill.category)
+        skill_id = await database.create_skill(name=skill.name, category=skill.category)
         if skill_id == -1:
             raise HTTPException(status_code=400, detail="Skill already exists")
         
-        created_skill = database.get_skill_by_id(skill_id)
+        created_skill = await database.get_skill_by_id(skill_id)
         logger.info(f"Admin {admin} created skill: {skill.name}")
         return created_skill
     except HTTPException:
@@ -390,11 +390,11 @@ async def update_skill(skill_id: int, skill: models.SkillUpdate,
         if not update_data:
             raise HTTPException(status_code=400, detail="No fields to update")
         
-        success = database.update_skill(skill_id, **update_data)
+        success = await database.update_skill(skill_id, **update_data)
         if not success:
             raise HTTPException(status_code=404, detail="Skill not found")
         
-        updated_skill = database.get_skill_by_id(skill_id)
+        updated_skill = await database.get_skill_by_id(skill_id)
         logger.info(f"Admin {admin} updated skill ID {skill_id}")
         return updated_skill
     except HTTPException:
@@ -408,7 +408,7 @@ async def update_skill(skill_id: int, skill: models.SkillUpdate,
 async def delete_skill(skill_id: int, admin: str = Depends(auth.verify_admin)):
     """Delete a skill (admin only)."""
     try:
-        success = database.delete_skill(skill_id)
+        success = await database.delete_skill(skill_id)
         if not success:
             raise HTTPException(status_code=404, detail="Skill not found")
         
@@ -427,12 +427,12 @@ async def delete_skill(skill_id: int, admin: str = Depends(auth.verify_admin)):
 async def update_about(about: models.AboutUpdate, admin: str = Depends(auth.verify_admin)):
     """Create or update about section (admin only)."""
     try:
-        about_id = database.create_or_update_about(
+        about_id = await database.create_or_update_about(
             bio=about.bio,
             current_company=about.current_company,
             current_role=about.current_role
         )
-        updated_about = database.get_about()
+        updated_about = await database.get_about()
         logger.info(f"Admin {admin} updated about section")
         return updated_about
     except Exception as e:
@@ -446,7 +446,7 @@ async def update_about(about: models.AboutUpdate, admin: str = Depends(auth.veri
 async def get_contact_submissions(admin: str = Depends(auth.verify_admin)):
     """Get all contact form submissions (admin only)."""
     try:
-        submissions = database.get_all_contact_submissions()
+        submissions = await database.get_all_contact_submissions()
         return submissions
     except Exception as e:
         logger.error(f"Error fetching contact submissions: {str(e)}")
@@ -457,7 +457,7 @@ async def get_contact_submissions(admin: str = Depends(auth.verify_admin)):
 async def delete_contact_submission(submission_id: int, admin: str = Depends(auth.verify_admin)):
     """Delete a contact form submission (admin only)."""
     try:
-        deleted = database.delete_contact_submission(submission_id)
+        deleted = await database.delete_contact_submission(submission_id)
         if not deleted:
             raise HTTPException(status_code=404, detail="Contact submission not found")
         return {"message": "Contact submission deleted successfully"}
@@ -585,7 +585,7 @@ async def verify_admin_credentials(admin: str = Depends(auth.verify_admin)):
 async def create_database_backup(admin: str = Depends(auth.verify_admin)):
     """Create a database backup and return download link (admin only)."""
     try:
-        result = backup.create_backup()
+        result = await backup.create_backup()
         
         if not result['success']:
             raise HTTPException(status_code=500, detail=result.get('error', 'Backup failed'))
@@ -641,8 +641,8 @@ async def restore_database(file: UploadFile = File(...), admin: str = Depends(au
     Completely replaces existing data and ensures it's properly saved."""
     try:
         # Validate file extension
-        if not file.filename.endswith('.db'):
-            raise HTTPException(status_code=400, detail="Only .db files are allowed")
+        if not file.filename.endswith('.json'):
+            raise HTTPException(status_code=400, detail="Only .json files are allowed")
         
         # Read uploaded file
         content = await file.read()
@@ -652,7 +652,7 @@ async def restore_database(file: UploadFile = File(...), admin: str = Depends(au
             raise HTTPException(status_code=400, detail="Uploaded file is empty")
         
         # Create backup of current database first
-        current_backup = backup.create_backup()
+        current_backup = await backup.create_backup()
         logger.info(f"Created safety backup before restore: {current_backup['filename']}")
         
         # Step 1: Force checkpoint and close all connections
@@ -664,24 +664,16 @@ async def restore_database(file: UploadFile = File(...), admin: str = Depends(au
         logger.info("Removing WAL and SHM files...")
         database.cleanup_wal_files()
         
-        # Get database path from environment
-        db_path = os.getenv('DATABASE_PATH', './backend/portfolio.db')
+        # Step 3: Restore from JSON payload
+        restore_result = await backup.restore_from_bytes(content)
+        if not restore_result.get("success"):
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to restore database: {restore_result.get('error', 'Unknown error')}"
+            )
         
-        # Step 3: Delete existing database file for complete replacement
-        if os.path.exists(db_path):
-            os.remove(db_path)
-            logger.info(f"Removed existing database: {db_path}")
-        
-        # Step 4: Write new database file
-        with open(db_path, 'wb') as f:
-            f.write(content)
-        logger.info(f"Written new database: {len(content)} bytes")
-        
-        # Step 5: Force WAL checkpoint on new database to ensure data is written
-        database.checkpoint_wal()
-        
-        # Step 6: Verify database integrity
-        health = database.verify_database_integrity()
+        # Step 4: Verify database integrity
+        health = await database.verify_database_integrity()
         if not health["healthy"]:
             logger.error(f"Restored database failed integrity check: {health['message']}")
             raise HTTPException(
@@ -743,7 +735,7 @@ async def seed_database(admin: str = Depends(auth.verify_admin)):
 async def list_backups(admin: str = Depends(auth.verify_admin)):
     """List all available backups (admin only)."""
     try:
-        backups_list = backup.list_backups()
+        backups_list = await backup.list_backups()
         return {"success": True, "backups": backups_list}
     except Exception as e:
         logger.error(f"Error listing backups: {str(e)}")

@@ -7,6 +7,7 @@ Usage:
 """
 
 import sys
+import asyncio
 from pathlib import Path
 
 # Add backend to path
@@ -14,12 +15,12 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from backend import database
 
-def seed_database():
+async def seed_database():
     """Seed the database with sample data."""
     print("🌱 Seeding database...")
     
     # Initialize database first
-    database.init_db()
+    await database.init_db()
     print("✅ Database initialized")
     
     # Sample Projects
@@ -29,7 +30,7 @@ def seed_database():
         {
             "title": "Portfolio Website",
             "description": "A modern, responsive portfolio website with an admin panel for content management. Built with FastAPI backend and vanilla JavaScript frontend.",
-            "technologies": ["Python", "FastAPI", "JavaScript", "SQLite", "HTML/CSS"],
+            "technologies": ["Python", "FastAPI", "JavaScript", "MongoDB", "HTML/CSS"],
             "github_url": "https://github.com/yourusername/portfolio",
             "external_url": None,
             "image_urls": [],
@@ -90,7 +91,7 @@ def seed_database():
     
     for project in projects_data:
         try:
-            project_id = database.create_project(**project)
+            project_id = await database.create_project(**project)
             print(f"  ✓ Created project: {project['title']} (ID: {project_id})")
         except Exception as e:
             print(f"  ✗ Error creating project {project['title']}: {e}")
@@ -142,7 +143,7 @@ def seed_database():
     
     for exp in experience_data:
         try:
-            exp_id = database.create_experience(**exp)
+            exp_id = await database.create_experience(**exp)
             print(f"  ✓ Created experience: {exp['role']} at {exp['company']} (ID: {exp_id})")
         except Exception as e:
             print(f"  ✗ Error creating experience: {e}")
@@ -187,7 +188,7 @@ def seed_database():
     
     for skill in skills_data:
         try:
-            skill_id = database.create_skill(**skill)
+            skill_id = await database.create_skill(**skill)
             print(f"  ✓ Created skill: {skill['name']} ({skill['category']})")
         except Exception as e:
             # Skill might already exist (UNIQUE constraint)
@@ -206,7 +207,7 @@ def seed_database():
     }
     
     try:
-        about_id = database.create_or_update_about(**about_data)
+        about_id = await database.create_or_update_about(**about_data)
         print(f"  ✓ Created about section (ID: {about_id})")
     except Exception as e:
         print(f"  ✗ Error creating about: {e}")
@@ -226,7 +227,7 @@ def seed_database():
 
 if __name__ == "__main__":
     try:
-        seed_database()
+        asyncio.run(seed_database())
     except Exception as e:
         print(f"\n❌ Error seeding database: {e}")
         sys.exit(1)
