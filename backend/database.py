@@ -121,123 +121,137 @@ def create_project(title: str, description: str, technologies: List[str],
                    is_featured: bool = False, display_order: int = 0) -> int:
     """Create a new project."""
     conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    # Handle backward compatibility: if image_url provided but not image_urls
-    if image_url and not image_urls:
-        image_urls = [image_url]
-    
-    cursor.execute("""
-        INSERT INTO projects (title, description, technologies, github_url, 
-                            external_url, image_url, image_urls, is_featured, display_order)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (title, description, json.dumps(technologies), github_url, 
-          external_url, image_url, json.dumps(image_urls) if image_urls else None, 
-          is_featured, display_order))
-    
-    project_id = cursor.lastrowid
     try:
+        cursor = conn.cursor()
+        
+        # Handle backward compatibility: if image_url provided but not image_urls
+        if image_url and not image_urls:
+            image_urls = [image_url]
+        
+        cursor.execute("""
+            INSERT INTO projects (title, description, technologies, github_url, 
+                                external_url, image_url, image_urls, is_featured, display_order)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (title, description, json.dumps(technologies), github_url, 
+              external_url, image_url, json.dumps(image_urls) if image_urls else None, 
+              is_featured, display_order))
+        
+        project_id = cursor.lastrowid
         conn.commit()
         print(f"Project '{title}' (ID: {project_id}) successfully saved to database at {DATABASE_PATH}")
+        return project_id
     except Exception as e:
         print(f"Error saving project: {e}")
         conn.rollback()
         raise
     finally:
         conn.close()
-    return project_id
 
 
 def get_all_projects(featured_only: bool = False) -> List[Dict[str, Any]]:
     """Get all projects, optionally filtered by featured status."""
     conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    if featured_only:
-        cursor.execute("""
-            SELECT * FROM projects WHERE is_featured = 1 ORDER BY display_order, created_at DESC
-        """)
-    else:
-        cursor.execute("SELECT * FROM projects ORDER BY display_order, created_at DESC")
-    
-    projects = []
-    for row in cursor.fetchall():
-        project = dict(row)
-        project['technologies'] = json.loads(project['technologies'])
-        project['is_featured'] = bool(project['is_featured'])
+    try:
+        cursor = conn.cursor()
         
-        # Parse image_urls array, fallback to single image_url for backward compatibility
-        if project.get('image_urls'):
-            project['image_urls'] = json.loads(project['image_urls'])
-        elif project.get('image_url'):
-            project['image_urls'] = [project['image_url']]
+        if featured_only:
+            cursor.execute("""
+                SELECT * FROM projects WHERE is_featured = 1 ORDER BY display_order, created_at DESC
+            """)
         else:
-            project['image_urls'] = []
+            cursor.execute("SELECT * FROM projects ORDER BY display_order, created_at DESC")
+        
+        projects = []
+        for row in cursor.fetchall():
+            project = dict(row)
+            project['technologies'] = json.loads(project['technologies'])
+            project['is_featured'] = bool(project['is_featured'])
             
-        projects.append(project)
-    
-    conn.close()
-    return projects
+            # Parse image_urls array, fallback to single image_url for backward compatibility
+            if project.get('image_urls'):
+                project['image_urls'] = json.loads(project['image_urls'])
+            elif project.get('image_url'):
+                project['image_urls'] = [project['image_url']]
+            else:
+                project['image_urls'] = []
+                
+            projects.append(project)
+        
+        return projects
+    finally:
+        conn.close()
 
 
 def get_project_by_id(project_id: int) -> Optional[Dict[str, Any]]:
     """Get a project by ID."""
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM projects WHERE id = ?", (project_id,))
-    row = cursor.fetchone()
-    conn.close()
-    
-    if row:
-        project = dict(row)
-        project['technologies'] = json.loads(project['technologies'])
-        project['is_featured'] = bool(project['is_featured'])
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM projects WHERE id = ?", (project_id,))
+        row = cursor.fetchone()
         
-        # Parse image_urls array
-        if project.get('image_urls'):
-            project['image_urls'] = json.loads(project['image_urls'])
-        elif project.get('image_url'):
-            project['image_urls'] = [project['image_url']]
-        else:
-            project['image_urls'] = []
+        if row:
+            project = dict(row)
+            project['technologies'] = json.loads(project['technologies'])
+            project['is_featured'] = bool(project['is_featured'])
             
-        return project
-    return None
+            # Parse image_urls array
+            if project.get('image_urls'):
+                project['image_urls'] = json.loads(project['image_urls'])
+            elif project.get('image_url'):
+                project['image_urls'] = [project['image_url']]
+            else:
+                project['image_urls'] = []
+                
+            return project
+        return None
+    finally:
+        conn.close()
 
 
 def update_project(project_id: int, **kwargs) -> bool:
     """Update a project."""
     conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    # Convert technologies list to JSON if present
-    if 'technologies' in kwargs and isinstance(kwargs['technologies'], list):
-        kwargs['technologies'] = json.dumps(kwargs['technologies'])
-    
-    # Convert image_urls list to JSON if present
-    if 'image_urls' in kwargs and isinstance(kwargs['image_urls'], list):
-        kwargs['image_urls'] = json.dumps(kwargs['image_urls'])
-    
-    # Build update query dynamically
-    fields = ", ".join([f"{key} = ?" for key in kwargs.keys()])
-    values = list(kwargs.values()) + [project_id]
-    
-    cursor.execute(f"UPDATE projects SET {fields} WHERE id = ?", values)
-    updated = cursor.rowcount > 0
-    conn.commit()
-    conn.close()
-    return updated
+    try:
+        cursor = conn.cursor()
+        
+        # Convert technologies list to JSON if present
+        if 'technologies' in kwargs and isinstance(kwargs['technologies'], list):
+            kwargs['technologies'] = json.dumps(kwargs['technologies'])
+        
+        # Convert image_urls list to JSON if present
+        if 'image_urls' in kwargs and isinstance(kwargs['image_urls'], list):
+            kwargs['image_urls'] = json.dumps(kwargs['image_urls'])
+        
+        # Build update query dynamically
+        fields = ", ".join([f"{key} = ?" for key in kwargs.keys()])
+        values = list(kwargs.values()) + [project_id]
+        
+        cursor.execute(f"UPDATE projects SET {fields} WHERE id = ?", values)
+        updated = cursor.rowcount > 0
+        conn.commit()
+        return updated
+    except Exception as e:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 
 def delete_project(project_id: int) -> bool:
     """Delete a project."""
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM projects WHERE id = ?", (project_id,))
-    deleted = cursor.rowcount > 0
-    conn.commit()
-    conn.close()
-    return deleted
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM projects WHERE id = ?", (project_id,))
+        deleted = cursor.rowcount > 0
+        conn.commit()
+        return deleted
+    except Exception as e:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 
 # ==================== EXPERIENCE CRUD ====================
@@ -247,79 +261,98 @@ def create_experience(company: str, role: str, date_range: str,
                      display_order: int = 0) -> int:
     """Create a new experience entry."""
     conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute("""
-        INSERT INTO experience (company, company_url, role, date_range, 
-                              responsibilities, display_order)
-        VALUES (?, ?, ?, ?, ?, ?)
-    """, (company, company_url, role, date_range, json.dumps(responsibilities), display_order))
-    
-    experience_id = cursor.lastrowid
-    conn.commit()
-    conn.close()
-    return experience_id
+    try:
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            INSERT INTO experience (company, company_url, role, date_range, 
+                                  responsibilities, display_order)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (company, company_url, role, date_range, json.dumps(responsibilities), display_order))
+        
+        experience_id = cursor.lastrowid
+        conn.commit()
+        return experience_id
+    except Exception as e:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 
 def get_all_experience() -> List[Dict[str, Any]]:
     """Get all experience entries."""
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM experience ORDER BY display_order, created_at DESC")
-    
-    experiences = []
-    for row in cursor.fetchall():
-        exp = dict(row)
-        exp['responsibilities'] = json.loads(exp['responsibilities'])
-        experiences.append(exp)
-    
-    conn.close()
-    return experiences
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM experience ORDER BY display_order, created_at DESC")
+        
+        experiences = []
+        for row in cursor.fetchall():
+            exp = dict(row)
+            exp['responsibilities'] = json.loads(exp['responsibilities'])
+            experiences.append(exp)
+        
+        return experiences
+    finally:
+        conn.close()
 
 
 def get_experience_by_id(experience_id: int) -> Optional[Dict[str, Any]]:
     """Get an experience entry by ID."""
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM experience WHERE id = ?", (experience_id,))
-    row = cursor.fetchone()
-    conn.close()
-    
-    if row:
-        exp = dict(row)
-        exp['responsibilities'] = json.loads(exp['responsibilities'])
-        return exp
-    return None
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM experience WHERE id = ?", (experience_id,))
+        row = cursor.fetchone()
+        
+        if row:
+            exp = dict(row)
+            exp['responsibilities'] = json.loads(exp['responsibilities'])
+            return exp
+        return None
+    finally:
+        conn.close()
 
 
 def update_experience(experience_id: int, **kwargs) -> bool:
     """Update an experience entry."""
     conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    # Convert responsibilities list to JSON if present
-    if 'responsibilities' in kwargs and isinstance(kwargs['responsibilities'], list):
-        kwargs['responsibilities'] = json.dumps(kwargs['responsibilities'])
-    
-    fields = ", ".join([f"{key} = ?" for key in kwargs.keys()])
-    values = list(kwargs.values()) + [experience_id]
-    
-    cursor.execute(f"UPDATE experience SET {fields} WHERE id = ?", values)
-    updated = cursor.rowcount > 0
-    conn.commit()
-    conn.close()
-    return updated
+    try:
+        cursor = conn.cursor()
+        
+        # Convert responsibilities list to JSON if present
+        if 'responsibilities' in kwargs and isinstance(kwargs['responsibilities'], list):
+            kwargs['responsibilities'] = json.dumps(kwargs['responsibilities'])
+        
+        fields = ", ".join([f"{key} = ?" for key in kwargs.keys()])
+        values = list(kwargs.values()) + [experience_id]
+        
+        cursor.execute(f"UPDATE experience SET {fields} WHERE id = ?", values)
+        updated = cursor.rowcount > 0
+        conn.commit()
+        return updated
+    except Exception as e:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 
 def delete_experience(experience_id: int) -> bool:
     """Delete an experience entry."""
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM experience WHERE id = ?", (experience_id,))
-    deleted = cursor.rowcount > 0
-    conn.commit()
-    conn.close()
-    return deleted
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM experience WHERE id = ?", (experience_id,))
+        deleted = cursor.rowcount > 0
+        conn.commit()
+        return deleted
+    except Exception as e:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 
 # ==================== SKILLS CRUD ====================
@@ -327,63 +360,76 @@ def delete_experience(experience_id: int) -> bool:
 def create_skill(name: str, category: Optional[str] = None) -> int:
     """Create a new skill."""
     conn = get_db_connection()
-    cursor = conn.cursor()
-    
     try:
+        cursor = conn.cursor()
         cursor.execute("INSERT INTO skills (name, category) VALUES (?, ?)", (name, category))
         skill_id = cursor.lastrowid
         conn.commit()
-        conn.close()
         return skill_id
     except sqlite3.IntegrityError:
-        conn.close()
         return -1  # Skill already exists
+    finally:
+        conn.close()
 
 
 def get_all_skills() -> List[Dict[str, Any]]:
     """Get all skills."""
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM skills ORDER BY category, name")
-    skills = [dict(row) for row in cursor.fetchall()]
-    conn.close()
-    return skills
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM skills ORDER BY category, name")
+        skills = [dict(row) for row in cursor.fetchall()]
+        return skills
+    finally:
+        conn.close()
 
 
 def get_skill_by_id(skill_id: int) -> Optional[Dict[str, Any]]:
     """Get a skill by ID."""
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM skills WHERE id = ?", (skill_id,))
-    row = cursor.fetchone()
-    conn.close()
-    return dict(row) if row else None
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM skills WHERE id = ?", (skill_id,))
+        row = cursor.fetchone()
+        return dict(row) if row else None
+    finally:
+        conn.close()
 
 
 def update_skill(skill_id: int, **kwargs) -> bool:
     """Update a skill."""
     conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    fields = ", ".join([f"{key} = ?" for key in kwargs.keys()])
-    values = list(kwargs.values()) + [skill_id]
-    
-    cursor.execute(f"UPDATE skills SET {fields} WHERE id = ?", values)
-    updated = cursor.rowcount > 0
-    conn.commit()
-    conn.close()
-    return updated
+    try:
+        cursor = conn.cursor()
+        
+        fields = ", ".join([f"{key} = ?" for key in kwargs.keys()])
+        values = list(kwargs.values()) + [skill_id]
+        
+        cursor.execute(f"UPDATE skills SET {fields} WHERE id = ?", values)
+        updated = cursor.rowcount > 0
+        conn.commit()
+        return updated
+    except Exception as e:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 
 def delete_skill(skill_id: int) -> bool:
     """Delete a skill."""
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM skills WHERE id = ?", (skill_id,))
-    deleted = cursor.rowcount > 0
-    conn.commit()
-    conn.close()
-    return deleted
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM skills WHERE id = ?", (skill_id,))
+        deleted = cursor.rowcount > 0
+        conn.commit()
+        return deleted
+    except Exception as e:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 
 # ==================== ABOUT CRUD ====================
@@ -392,41 +438,48 @@ def create_or_update_about(bio: str, current_company: Optional[str] = None,
                            current_role: Optional[str] = None) -> int:
     """Create or update the about section (only one entry exists)."""
     conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    # Check if about entry exists
-    cursor.execute("SELECT id FROM about LIMIT 1")
-    existing = cursor.fetchone()
-    
-    if existing:
-        # Update existing
-        cursor.execute("""
-            UPDATE about SET bio = ?, current_company = ?, current_role = ?, 
-                           updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-        """, (bio, current_company, current_role, existing['id']))
-        about_id = existing['id']
-    else:
-        # Create new
-        cursor.execute("""
-            INSERT INTO about (bio, current_company, current_role)
-            VALUES (?, ?, ?)
-        """, (bio, current_company, current_role))
-        about_id = cursor.lastrowid
-    
-    conn.commit()
-    conn.close()
-    return about_id
+    try:
+        cursor = conn.cursor()
+        
+        # Check if about entry exists
+        cursor.execute("SELECT id FROM about LIMIT 1")
+        existing = cursor.fetchone()
+        
+        if existing:
+            # Update existing
+            cursor.execute("""
+                UPDATE about SET bio = ?, current_company = ?, current_role = ?, 
+                               updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            """, (bio, current_company, current_role, existing['id']))
+            about_id = existing['id']
+        else:
+            # Create new
+            cursor.execute("""
+                INSERT INTO about (bio, current_company, current_role)
+                VALUES (?, ?, ?)
+            """, (bio, current_company, current_role))
+            about_id = cursor.lastrowid
+        
+        conn.commit()
+        return about_id
+    except Exception as e:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 
 def get_about() -> Optional[Dict[str, Any]]:
     """Get the about section."""
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM about LIMIT 1")
-    row = cursor.fetchone()
-    conn.close()
-    return dict(row) if row else None
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM about LIMIT 1")
+        row = cursor.fetchone()
+        return dict(row) if row else None
+    finally:
+        conn.close()
 
 
 # ==================== CONTACT SUBMISSIONS CRUD ====================
@@ -436,25 +489,29 @@ def create_contact_submission(name: str, email: str, message: str,
                               ip_address: Optional[str] = None) -> int:
     """Create a new contact submission."""
     conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute("""
-        INSERT INTO contact_submissions (name, email, subject, message, ip_address)
-        VALUES (?, ?, ?, ?, ?)
-    """, (name, email, subject, message, ip_address))
-    
-    submission_id = cursor.lastrowid
-    conn.commit()
-    conn.close()
-    return submission_id
+    try:
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            INSERT INTO contact_submissions (name, email, subject, message, ip_address)
+            VALUES (?, ?, ?, ?, ?)
+        """, (name, email, subject, message, ip_address))
+        
+        submission_id = cursor.lastrowid
+        conn.commit()
+        return submission_id
+    except Exception as e:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 
 def mark_email_sent(submission_id: int) -> bool:
     """Mark a contact submission as email sent."""
     conn = get_db_connection()
-    cursor = conn.cursor()
-    
     try:
+        cursor = conn.cursor()
         cursor.execute("""
             UPDATE contact_submissions 
             SET email_sent = 1, email_sent_at = CURRENT_TIMESTAMP 
@@ -471,44 +528,52 @@ def mark_email_sent(submission_id: int) -> bool:
         return False
     finally:
         conn.close()
-    return updated
 
 
 def get_all_contact_submissions() -> List[Dict[str, Any]]:
     """Get all contact submissions."""
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM contact_submissions ORDER BY created_at DESC")
-    submissions = [dict(row) for row in cursor.fetchall()]
-    conn.close()
-    return submissions
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM contact_submissions ORDER BY created_at DESC")
+        submissions = [dict(row) for row in cursor.fetchall()]
+        return submissions
+    finally:
+        conn.close()
 
 
 def delete_contact_submission(submission_id: int) -> bool:
     """Delete a contact submission by ID."""
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM contact_submissions WHERE id = ?", (submission_id,))
-    conn.commit()
-    deleted = cursor.rowcount > 0
-    conn.close()
-    return deleted
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM contact_submissions WHERE id = ?", (submission_id,))
+        conn.commit()
+        deleted = cursor.rowcount > 0
+        return deleted
+    except Exception as e:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 
 def get_recent_submissions_by_ip(ip_address: str, hours: int = 1) -> int:
     """Get count of submissions from an IP in the last N hours."""
     conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute("""
-        SELECT COUNT(*) as count FROM contact_submissions 
-        WHERE ip_address = ? 
-        AND created_at > datetime('now', '-' || ? || ' hours')
-    """, (ip_address, hours))
-    
-    result = cursor.fetchone()
-    conn.close()
-    return result['count'] if result else 0
+    try:
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT COUNT(*) as count FROM contact_submissions 
+            WHERE ip_address = ? 
+            AND created_at > datetime('now', '-' || ? || ' hours')
+        """, (ip_address, hours))
+        
+        result = cursor.fetchone()
+        return result['count'] if result else 0
+    finally:
+        conn.close()
 
 
 if __name__ == "__main__":
