@@ -34,6 +34,8 @@ document.addEventListener('DOMContentLoaded', () => {
 // ==================== FETCH DATA FROM API ====================
 async function fetchAllData() {
     console.log('[MAIN] Starting to fetch all data...');
+    console.log('[INFO] Backend may take 30-60 seconds to wake up if inactive...');
+    
     try {
         // Fetch all data in parallel
         const [projects, experience, skills, about] = await Promise.all([
@@ -81,7 +83,9 @@ async function fetchAllData() {
 async function fetchProjects() {
     try {
         console.log(`[API] Fetching projects from ${API_URL}/api/projects`);
-        const response = await fetch(`${API_URL}/api/projects`);
+        const response = await fetch(`${API_URL}/api/projects`, { 
+            signal: AbortSignal.timeout(60000) // 60 second timeout for cold start
+        });
         if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         return await response.json();
     } catch (error) {
@@ -93,7 +97,9 @@ async function fetchProjects() {
 async function fetchExperience() {
     try {
         console.log(`[API] Fetching experience from ${API_URL}/api/experience`);
-        const response = await fetch(`${API_URL}/api/experience`);
+        const response = await fetch(`${API_URL}/api/experience`, {
+            signal: AbortSignal.timeout(60000) // 60 second timeout for cold start
+        });
         if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         return await response.json();
     } catch (error) {
@@ -105,7 +111,9 @@ async function fetchExperience() {
 async function fetchSkills() {
     try {
         console.log(`[API] Fetching skills from ${API_URL}/api/skills`);
-        const response = await fetch(`${API_URL}/api/skills`);
+        const response = await fetch(`${API_URL}/api/skills`, {
+            signal: AbortSignal.timeout(60000) // 60 second timeout for cold start
+        });
         if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         return await response.json();
     } catch (error) {
@@ -117,7 +125,9 @@ async function fetchSkills() {
 async function fetchAbout() {
     try {
         console.log(`[API] Fetching about from ${API_URL}/api/about`);
-        const response = await fetch(`${API_URL}/api/about`);
+        const response = await fetch(`${API_URL}/api/about`, {
+            signal: AbortSignal.timeout(60000) // 60 second timeout for cold start
+        });
         if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         const data = await response.json();
         return Object.keys(data).length > 0 ? data : null;
