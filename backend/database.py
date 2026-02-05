@@ -27,17 +27,18 @@ def get_db_connection():
                 DATABASE_PATH, 
                 timeout=30.0,  # Increased timeout for reliability
                 check_same_thread=False,
-                isolation_level=None  # Autocommit mode for better concurrency
+                isolation_level='DEFERRED'  # Use normal transactions for persistence
             )
             conn.row_factory = sqlite3.Row
             
-            # Configure for 24/7 availability
+            # Configure for 24/7 availability and data persistence
             conn.execute("PRAGMA journal_mode=WAL")
             conn.execute("PRAGMA synchronous=NORMAL")
             conn.execute("PRAGMA temp_store=MEMORY")
             conn.execute("PRAGMA mmap_size=30000000000")  # 30GB memory mapping
             conn.execute("PRAGMA page_size=4096")
             conn.execute("PRAGMA cache_size=10000")  # 40MB cache
+            conn.execute("PRAGMA wal_autocheckpoint=1000")  # Checkpoint every 1000 pages
             
             # Test connection
             conn.execute("SELECT 1").fetchone()
@@ -245,6 +246,8 @@ def create_project(title: str, description: str, technologies: List[str],
         
         project_id = cursor.lastrowid
         conn.commit()
+        # Force checkpoint to ensure data is saved
+        conn.execute("PRAGMA wal_checkpoint(PASSIVE)")
         print(f"Project '{title}' (ID: {project_id}) successfully saved to database at {DATABASE_PATH}")
         return project_id
     except Exception as e:
@@ -337,6 +340,9 @@ def update_project(project_id: int, **kwargs) -> bool:
         cursor.execute(f"UPDATE projects SET {fields} WHERE id = ?", values)
         updated = cursor.rowcount > 0
         conn.commit()
+        # Force checkpoint to ensure data is saved
+        if updated:
+            conn.execute("PRAGMA wal_checkpoint(PASSIVE)")
         return updated
     except Exception as e:
         conn.rollback()
@@ -353,6 +359,9 @@ def delete_project(project_id: int) -> bool:
         cursor.execute("DELETE FROM projects WHERE id = ?", (project_id,))
         deleted = cursor.rowcount > 0
         conn.commit()
+        # Force checkpoint to ensure data is saved
+        if deleted:
+            conn.execute("PRAGMA wal_checkpoint(PASSIVE)")
         return deleted
     except Exception as e:
         conn.rollback()
@@ -379,6 +388,8 @@ def create_experience(company: str, role: str, date_range: str,
         
         experience_id = cursor.lastrowid
         conn.commit()
+        # Force checkpoint to ensure data is saved
+        conn.execute("PRAGMA wal_checkpoint(PASSIVE)")
         return experience_id
     except Exception as e:
         conn.rollback()
@@ -438,6 +449,9 @@ def update_experience(experience_id: int, **kwargs) -> bool:
         cursor.execute(f"UPDATE experience SET {fields} WHERE id = ?", values)
         updated = cursor.rowcount > 0
         conn.commit()
+        # Force checkpoint to ensure data is saved
+        if updated:
+            conn.execute("PRAGMA wal_checkpoint(PASSIVE)")
         return updated
     except Exception as e:
         conn.rollback()
@@ -454,6 +468,9 @@ def delete_experience(experience_id: int) -> bool:
         cursor.execute("DELETE FROM experience WHERE id = ?", (experience_id,))
         deleted = cursor.rowcount > 0
         conn.commit()
+        # Force checkpoint to ensure data is saved
+        if deleted:
+            conn.execute("PRAGMA wal_checkpoint(PASSIVE)")
         return deleted
     except Exception as e:
         conn.rollback()
@@ -472,6 +489,8 @@ def create_skill(name: str, category: Optional[str] = None) -> int:
         cursor.execute("INSERT INTO skills (name, category) VALUES (?, ?)", (name, category))
         skill_id = cursor.lastrowid
         conn.commit()
+        # Force checkpoint to ensure data is saved
+        conn.execute("PRAGMA wal_checkpoint(PASSIVE)")
         return skill_id
     except sqlite3.IntegrityError:
         return -1  # Skill already exists
@@ -515,6 +534,9 @@ def update_skill(skill_id: int, **kwargs) -> bool:
         cursor.execute(f"UPDATE skills SET {fields} WHERE id = ?", values)
         updated = cursor.rowcount > 0
         conn.commit()
+        # Force checkpoint to ensure data is saved
+        if updated:
+            conn.execute("PRAGMA wal_checkpoint(PASSIVE)")
         return updated
     except Exception as e:
         conn.rollback()
@@ -531,6 +553,9 @@ def delete_skill(skill_id: int) -> bool:
         cursor.execute("DELETE FROM skills WHERE id = ?", (skill_id,))
         deleted = cursor.rowcount > 0
         conn.commit()
+        # Force checkpoint to ensure data is saved
+        if deleted:
+            conn.execute("PRAGMA wal_checkpoint(PASSIVE)")
         return deleted
     except Exception as e:
         conn.rollback()
@@ -569,6 +594,8 @@ def create_or_update_about(bio: str, current_company: Optional[str] = None,
             about_id = cursor.lastrowid
         
         conn.commit()
+        # Force checkpoint to ensure data is saved
+        conn.execute("PRAGMA wal_checkpoint(PASSIVE)")
         return about_id
     except Exception as e:
         conn.rollback()
@@ -606,6 +633,8 @@ def create_contact_submission(name: str, email: str, message: str,
         
         submission_id = cursor.lastrowid
         conn.commit()
+        # Force checkpoint to ensure data is saved
+        conn.execute("PRAGMA wal_checkpoint(PASSIVE)")
         return submission_id
     except Exception as e:
         conn.rollback()
@@ -627,6 +656,9 @@ def mark_email_sent(submission_id: int) -> bool:
         
         updated = cursor.rowcount > 0
         conn.commit()
+        # Force checkpoint to ensure data is saved
+        if updated:
+            conn.execute("PRAGMA wal_checkpoint(PASSIVE)")
         print(f"Contact submission {submission_id} marked as email sent")
         return updated
     except Exception as e:
@@ -657,6 +689,9 @@ def delete_contact_submission(submission_id: int) -> bool:
         cursor.execute("DELETE FROM contact_submissions WHERE id = ?", (submission_id,))
         conn.commit()
         deleted = cursor.rowcount > 0
+        # Force checkpoint to ensure data is saved
+        if deleted:
+            conn.execute("PRAGMA wal_checkpoint(PASSIVE)")
         return deleted
     except Exception as e:
         conn.rollback()
