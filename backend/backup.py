@@ -31,6 +31,13 @@ def create_backup() -> dict:
                 "path": None
             }
         
+        # Checkpoint WAL before backup to ensure all data is in main file
+        try:
+            from backend import database
+            database.checkpoint_wal()
+        except Exception as e:
+            logger.warning(f"WAL checkpoint before backup failed: {e}")
+        
         # Create timestamped filename
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         backup_filename = f"portfolio_backup_{timestamp}.db"
@@ -121,6 +128,15 @@ def restore_backup(backup_filename: str) -> dict:
         current_backup = create_backup()
         if not current_backup["success"]:
             logger.warning("Failed to create safety backup before restore")
+        
+        # Import here to avoid circular dependency
+        from backend import database
+        
+        # Close all active connections
+        database.close_all_connections()
+        
+        # Remove WAL and SHM files before restore
+        database.cleanup_wal_files()
         
         # Restore the backup
         shutil.copy2(backup_path, DATABASE_PATH)

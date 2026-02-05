@@ -2,6 +2,7 @@ import os
 import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
+from datetime import datetime
 from fastapi import FastAPI, HTTPException, Depends, File, UploadFile, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -69,16 +70,57 @@ app.mount("/uploads", StaticFiles(directory=str(static_dir)), name="uploads")
 # Initialize database on startup
 @app.on_event("startup")
 async def startup_event():
-    database.init_db()
-    logger.info("Application started and database initialized")
+    try:
+        database.init_db()
+        # Verify database integrity on startup
+        health = database.verify_database_integrity()
+        if health["healthy"]:
+            logger.info("Application started successfully - database is healthy")
+        else:
+            logger.warning(f"Application started but database health check failed: {health['message']}")
+    except Exception as e:
+        logger.error(f"Failed to initialize database: {e}")
+        raise
+
+
+# Periodic checkpoint task
+@app.on_event("startup")
+async def start_periodic_checkpoint():
+    """Start background task for periodic WAL checkpoints."""
+    import asyncio
+    
+    async def checkpoint_task():
+        while True:
+            try:
+                await asyncio.sleep(300)  # Every 5 minutes
+                database.checkpoint_wal()
+            except Exception as e:
+                logger.error(f"Periodic checkpoint failed: {e}")
+    
+    asyncio.create_task(checkpoint_task())
 
 
 # ==================== HEALTH CHECK ====================
 
 @app.get("/api/health")
 async def health_check():
-    """Health check endpoint for deployment monitoring."""
-    return {"status": "healthy", "message": "API is running"}
+    """Health check endpoint for deployment monitoring with database verification."""
+    try:
+        db_health = database.verify_database_integrity()
+        return {
+            "status": "healthy" if db_health["healthy"] else "degraded",
+            "message": "API is running",
+            "database": db_health,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Health check failed: {e}")
+        return {
+            "status": "unhealthy",
+            "message": str(e),
+            "database": {"healthy": False, "message": str(e)},
+            "timestamp": datetime.now().isoformat()
+        }
 
 
 @app.get("/api/test-image/{filename}")
@@ -607,6 +649,12 @@ async def restore_database(file: UploadFile = File(...), admin: str = Depends(au
         current_backup = backup.create_backup()
         logger.info(f"Created safety backup before restore: {current_backup['filename']}")
         
+        # Close all active database connections
+        database.close_all_connections()
+        
+        # Remove WAL and SHM files to prevent stale data
+        database.cleanup_wal_files()
+        
         # Get database path from environment
         db_path = os.getenv('DATABASE_PATH', './backend/portfolio.db')
         
@@ -625,8 +673,8 @@ async def restore_database(file: UploadFile = File(...), admin: str = Depends(au
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error downloading backup: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to download backup")
+        logger.error(f"Error restoring database: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to restore database")
 
 
 @app.get("/api/admin/backups")

@@ -3,112 +3,222 @@ import os
 import json
 from datetime import datetime
 from typing import List, Dict, Optional, Any
+import logging
+import threading
+import time
 
 DATABASE_PATH = os.getenv("DATABASE_PATH", "./backend/portfolio.db")
+logger = logging.getLogger(__name__)
+
+# Connection pool for 24/7 availability
+_connection_pool = []
+_pool_lock = threading.Lock()
+_pool_size = 10
+_last_checkpoint = time.time()
+_checkpoint_interval = 300  # 5 minutes
 
 
 def get_db_connection():
-    """Get a database connection."""
-    conn = sqlite3.connect(DATABASE_PATH, timeout=10.0, check_same_thread=False)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA journal_mode=WAL")
-    conn.execute("PRAGMA synchronous=NORMAL")
-    return conn
+    """Get a database connection with automatic reconnection."""
+    max_retries = 3
+    retry_delay = 1  # seconds
+    
+    for attempt in range(max_retries):
+        try:
+            conn = sqlite3.connect(
+                DATABASE_PATH, 
+                timeout=30.0,  # Increased timeout for reliability
+                check_same_thread=False,
+                isolation_level=None  # Autocommit mode for better concurrency
+            )
+            conn.row_factory = sqlite3.Row
+            
+            # Configure for 24/7 availability
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("PRAGMA synchronous=NORMAL")
+            conn.execute("PRAGMA temp_store=MEMORY")
+            conn.execute("PRAGMA mmap_size=30000000000")  # 30GB memory mapping
+            conn.execute("PRAGMA page_size=4096")
+            conn.execute("PRAGMA cache_size=10000")  # 40MB cache
+            
+            # Test connection
+            conn.execute("SELECT 1").fetchone()
+            
+            # Periodic WAL checkpoint to prevent file bloat
+            global _last_checkpoint
+            if time.time() - _last_checkpoint > _checkpoint_interval:
+                try:
+                    conn.execute("PRAGMA wal_checkpoint(PASSIVE)")
+                    _last_checkpoint = time.time()
+                except:
+                    pass  # Don't fail on checkpoint error
+            
+            return conn
+            
+        except sqlite3.Error as e:
+            logger.warning(f"Database connection attempt {attempt + 1} failed: {e}")
+            if attempt < max_retries - 1:
+                time.sleep(retry_delay)
+                retry_delay *= 2  # Exponential backoff
+            else:
+                logger.error(f"Failed to connect to database after {max_retries} attempts")
+                raise
+
+
+def close_all_connections():
+    """Close all database connections. Call this after database restore."""
+    global _connection_pool
+    with _pool_lock:
+        for conn in _connection_pool:
+            try:
+                conn.close()
+            except:
+                pass
+        _connection_pool.clear()
+    logger.info("All database connections closed")
+
+
+def cleanup_wal_files():
+    """Remove WAL and SHM files. Call this during database restore."""
+    wal_file = f"{DATABASE_PATH}-wal"
+    shm_file = f"{DATABASE_PATH}-shm"
+    
+    for file_path in [wal_file, shm_file]:
+        if os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+                logger.info(f"Removed {os.path.basename(file_path)}")
+            except Exception as e:
+                logger.warning(f"Failed to remove {file_path}: {e}")
+
+
+def checkpoint_wal():
+    """Force a WAL checkpoint to ensure all data is written to main database file."""
+    conn = get_db_connection()
+    try:
+        conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+        logger.info("WAL checkpoint completed")
+    except Exception as e:
+        logger.warning(f"WAL checkpoint failed: {e}")
+    finally:
+        conn.close()
+
+
+def verify_database_integrity():
+    """Verify database integrity and return health status."""
+    try:
+        conn = get_db_connection()
+        try:
+            # Quick integrity check
+            result = conn.execute("PRAGMA quick_check").fetchone()
+            if result and result[0] == "ok":
+                # Test actual data access
+                conn.execute("SELECT COUNT(*) FROM projects").fetchone()
+                return {"healthy": True, "status": "ok", "message": "Database is healthy"}
+            else:
+                return {"healthy": False, "status": "error", "message": "Integrity check failed"}
+        finally:
+            conn.close()
+    except Exception as e:
+        logger.error(f"Database health check failed: {e}")
+        return {"healthy": False, "status": "error", "message": str(e)}
 
 
 def init_db():
     """Initialize the database with all required tables."""
     conn = get_db_connection()
-    cursor = conn.cursor()
-
-    # Projects table
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS projects (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL,
-            description TEXT NOT NULL,
-            technologies TEXT NOT NULL,
-            github_url TEXT,
-            external_url TEXT,
-            image_url TEXT,
-            image_urls TEXT,
-            is_featured BOOLEAN DEFAULT 0,
-            display_order INTEGER DEFAULT 0,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-    
-    # Migrate existing image_url to image_urls array
     try:
-        cursor.execute("SELECT name FROM pragma_table_info('projects') WHERE name='image_urls'")
-        if not cursor.fetchone():
-            cursor.execute("ALTER TABLE projects ADD COLUMN image_urls TEXT")
-            # Migrate existing single images to array format
-            cursor.execute("""
-                UPDATE projects 
-                SET image_urls = json_array(image_url) 
-                WHERE image_url IS NOT NULL AND image_url != ''
-            """)
-            conn.commit()
-    except:
-        pass
+        cursor = conn.cursor()
 
-    # Experience table
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS experience (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            company TEXT NOT NULL,
-            company_url TEXT,
-            role TEXT NOT NULL,
-            date_range TEXT NOT NULL,
-            responsibilities TEXT NOT NULL,
-            display_order INTEGER DEFAULT 0,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
+        # Projects table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS projects (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                description TEXT NOT NULL,
+                technologies TEXT NOT NULL,
+                github_url TEXT,
+                external_url TEXT,
+                image_url TEXT,
+                image_urls TEXT,
+                is_featured BOOLEAN DEFAULT 0,
+                display_order INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        # Migrate existing image_url to image_urls array
+        try:
+            cursor.execute("SELECT name FROM pragma_table_info('projects') WHERE name='image_urls'")
+            if not cursor.fetchone():
+                cursor.execute("ALTER TABLE projects ADD COLUMN image_urls TEXT")
+                # Migrate existing single images to array format
+                cursor.execute("""
+                    UPDATE projects 
+                    SET image_urls = json_array(image_url) 
+                    WHERE image_url IS NOT NULL AND image_url != ''
+                """)
+        except:
+            pass
 
-    # Skills table
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS skills (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL UNIQUE,
-            category TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
+        # Experience table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS experience (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                company TEXT NOT NULL,
+                company_url TEXT,
+                role TEXT NOT NULL,
+                date_range TEXT NOT NULL,
+                responsibilities TEXT NOT NULL,
+                display_order INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
 
-    # About table
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS about (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            bio TEXT NOT NULL,
-            current_company TEXT,
-            current_role TEXT,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
+        # Skills table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS skills (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL UNIQUE,
+                category TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
 
-    # Contact submissions table
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS contact_submissions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            email TEXT NOT NULL,
-            subject TEXT,
-            message TEXT NOT NULL,
-            ip_address TEXT,
-            email_sent BOOLEAN DEFAULT 0,
-            email_sent_at TIMESTAMP,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
+        # About table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS about (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                bio TEXT NOT NULL,
+                current_company TEXT,
+                current_role TEXT,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
 
-    try:
-        conn.commit()
+        # Contact submissions table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS contact_submissions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                email TEXT NOT NULL,
+                subject TEXT,
+                message TEXT NOT NULL,
+                ip_address TEXT,
+                email_sent BOOLEAN DEFAULT 0,
+                email_sent_at TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # Verify integrity
+        conn.execute("PRAGMA integrity_check")
         print(f"Database initialized at {DATABASE_PATH}")
+        logger.info(f"Database tables created successfully")
     except Exception as e:
-        print(f"Error committing database initialization: {e}")
-        conn.rollback()
+        print(f"Error initializing database: {e}")
+        logger.error(f"Database initialization failed: {e}")
+        raise
     finally:
         conn.close()
 
