@@ -1,0 +1,134 @@
+{
+  "version": 1,
+  "created_at": {
+    "$date": "2026-02-05T16:36:28.226Z"
+  },
+  "collections": {
+    "projects": [
+      {
+        "_id": {
+          "$oid": "6984c5e899f1a5f093443778"
+        },
+        "id": 1,
+        "title": "PassWatch",
+        "description": "A password breach scanner with Firebase authentication, real-time history tracking. Features password strength analysis, secure generator, crack time estimation, and breach detection with k-anonymity for privacy.",
+        "technologies": [
+          "Python",
+          "Flask",
+          "JavaScript",
+          "FireBase",
+          "HTML/CSS"
+        ],
+        "github_url": "https://github.com/Kev-11/Password_checker",
+        "external_url": "https://passwatch.vercel.app/",
+        "image_url": "/uploads/fdfb1f38c83d496fa06b53dc023f6395.png",
+        "image_urls": [
+          "/uploads/fdfb1f38c83d496fa06b53dc023f6395.png"
+        ],
+        "is_featured": true,
+        "display_order": 0,
+        "created_at": {
+          "$date": "2026-02-05T16:31:36.545Z"
+        }
+      },
+      {
+        "_id": {
+          "$oid": "6984c63c99f1a5f093443779"
+        },
+        "id": 2,
+        "title": "Autism Predictor",
+        "description": "A machine learning model deployed using Streamlit to predict whether a person has autism based on given input features.",
+        "technologies": [
+          "Python",
+          "Pandas",
+          "Scikit-Learn",
+          "Seaborn",
+          "Jupyter NB"
+        ],
+        "github_url": "https://github.com/Kev-11/Autism_P",
+        "external_url": "https://autism-predictor.streamlit.app/",
+        "image_url": "/uploads/7783f9bb82854da9866f132de9a6b66a.png",
+        "image_urls": [
+          "/uploads/7783f9bb82854da9866f132de9a6b66a.png"
+        ],
+        "is_featured": false,
+        "display_order": 0,
+        "created_at": {
+          "$date": "2026-02-05T16:33:00.708Z"
+        }
+      },
+      {
+        "_id": {
+          "$oid": "6984c67c99f1a5f09344377a"
+        },
+        "id": 3,
+        "title": "PDF Extractor",
+        "description": "This is a minimal MVP to extract text from PDFs and images and provide basic engagement suggestions.",
+        "technologies": [
+          "HTML",
+          "CSS",
+          "JavaScript",
+          "OCR"
+        ],
+        "github_url": "https://github.com/Kev-11/SMA",
+        "external_url": "https://sma-xi.vercel.app",
+        "image_url": null,
+        "image_urls": [],
+        "is_featured": false,
+        "display_order": 1,
+        "created_at": {
+          "$date": "2026-02-05T16:34:04.770Z"
+        }
+      }
+    ],
+    "experience": [
+      {
+        "_id": {
+          "$oid": "6984c6a199f1a5f09344377b"
+        },
+        "id": 1,
+        "company": "Eliteware Solutions",
+        "company_url": "https://elitewaresolutions.com/",
+        "role": "AI/ML Intern",
+        "date_range": "2 Feb - Current",
+        "responsibilities": [
+          "I'm currently tasked with assisting the main developer team in data pre-processing and ELT(Extract-Transform-Load) pipeline."
+        ],
+        "display_order": 0,
+        "created_at": {
+          "$date": "2026-02-05T16:34:41.428Z"
+        }
+      }
+    ],
+    "skills": [],
+    "about": [
+      {
+        "_id": {
+          "$oid": "6984c6bd99f1a5f09344377c"
+        },
+        "id": 1,
+        "bio": "Hello! I'm passionate about building digital solutions that make a difference. My journey into software development began with curiosity and has evolved into a deep love for crafting elegant code and intuitive user experiences. Whether it's frontend magic or backend logic, I find joy in solving problems one line at a time.\n\nFast-forward to today, and I'm currently working at a company where I'm building quality software solutions and expanding my horizons. Recently, I've developed a strong inclination towards data science and machine learning, diving into the fascinating world of algorithms that can learn and adapt.",
+        "current_company": null,
+        "current_role": null,
+        "updated_at": {
+          "$date": "2026-02-05T16:35:09.929Z"
+        }
+      }
+    ],
+    "contact_submissions": [],
+    "counters": [
+      {
+        "_id": "projects",
+        "seq": 3
+      },
+      {
+        "_id": "experience",
+        "seq": 1
+      },
+      {
+        "_id": "about",
+        "seq": 1
+      }
+    ]
+  }
+}
