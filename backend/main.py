@@ -5,7 +5,6 @@ from pathlib import Path
 from datetime import datetime
 from fastapi import FastAPI, HTTPException, Depends, File, UploadFile, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -67,11 +66,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Mount static files for uploaded images
-static_dir = Path("frontend/assets/images")
-static_dir.mkdir(parents=True, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=str(static_dir)), name="uploads")
 
 # Initialize database on startup
 @app.on_event("startup")
@@ -473,109 +467,6 @@ async def delete_contact_submission(submission_id: int, admin: str = Depends(aut
     except Exception as e:
         logger.error(f"Error deleting contact submission: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to delete contact submission")
-
-
-# ==================== ADMIN ENDPOINTS - FILE UPLOAD ====================
-
-ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.gif'}
-MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
-
-@app.post("/api/admin/upload", response_model=dict)
-async def upload_image(file: UploadFile = File(...), admin: str = Depends(auth.verify_admin)):
-    """Upload an image file (admin only)."""
-    try:
-        # Validate file extension
-        file_ext = Path(file.filename).suffix.lower()
-        if file_ext not in ALLOWED_EXTENSIONS:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid file type. Allowed: {', '.join(ALLOWED_EXTENSIONS)}"
-            )
-        
-        # Read file content
-        contents = await file.read()
-        
-        # Validate file size
-        if len(contents) > MAX_FILE_SIZE:
-            raise HTTPException(
-                status_code=400,
-                detail=f"File too large. Maximum size: {MAX_FILE_SIZE / 1024 / 1024}MB"
-            )
-        
-        # Generate safe filename
-        import uuid
-        safe_filename = f"{uuid.uuid4().hex}{file_ext}"
-        file_path = static_dir / safe_filename
-        
-        # Save file
-        with open(file_path, "wb") as f:
-            f.write(contents)
-        
-        # Return URL to access the file
-        file_url = f"/uploads/{safe_filename}"
-        
-        logger.info(f"Admin {admin} uploaded file: {safe_filename}")
-        
-        return {
-            "success": True,
-            "filename": safe_filename,
-            "url": file_url
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error uploading file: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to upload file")
-
-
-@app.get("/api/admin/images", response_model=list)
-async def list_images(admin: str = Depends(auth.verify_admin)):
-    """List all available images in the static directory (admin only)."""
-    try:
-        image_files = []
-        for file_path in static_dir.glob("*"):
-            if file_path.is_file() and file_path.suffix.lower() in ALLOWED_EXTENSIONS:
-                image_files.append({
-                    "filename": file_path.name,
-                    "url": f"/uploads/{file_path.name}",
-                    "size": file_path.stat().st_size
-                })
-        
-        # Sort by filename
-        image_files.sort(key=lambda x: x['filename'])
-        
-        logger.info(f"Admin {admin} listed {len(image_files)} images")
-        return image_files
-    except Exception as e:
-        logger.error(f"Error listing images: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to list images")
-
-
-@app.delete("/api/admin/images/{filename}")
-async def delete_image(filename: str, admin: str = Depends(auth.verify_admin)):
-    """Delete an image file (admin only)."""
-    try:
-        # Security check: ensure filename doesn't contain path traversal
-        if ".." in filename or "/" in filename or "\\" in filename:
-            raise HTTPException(status_code=400, detail="Invalid filename")
-        
-        file_path = static_dir / filename
-        
-        if not file_path.exists():
-            raise HTTPException(status_code=404, detail="Image not found")
-        
-        # Delete the file
-        file_path.unlink()
-        
-        logger.info(f"Admin {admin} deleted image: {filename}")
-        return {"message": "Image deleted successfully", "filename": filename}
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error deleting image: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to delete image")
 
 
 # ==================== ADMIN ENDPOINTS - AUTH ====================

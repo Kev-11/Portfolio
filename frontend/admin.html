@@ -59,7 +59,6 @@
             <button class="admin-tab" data-tab="skills">Skills</button>
             <button class="admin-tab" data-tab="about">About</button>
             <button class="admin-tab" data-tab="contacts">Contact Submissions</button>
-            <button class="admin-tab" data-tab="images">Images</button>
         </div>
 
         <!-- Tab Contents -->
@@ -101,30 +100,24 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>Project Images (Select multiple for carousel)</label>
+                        <label>Project Images (External URLs only, multiple allowed)</label>
                         <div class="file-upload-container">
                             <div class="upload-tabs">
-                                <button type="button" class="upload-tab active" data-upload-tab="upload">Upload New</button>
-                                <button type="button" class="upload-tab" data-upload-tab="existing">Choose Existing</button>
+                                <button type="button" class="upload-tab active" data-upload-tab="upload">Add URL</button>
                             </div>
                             
-                            <!-- Upload Tab -->
+                            <!-- URL Tab -->
                             <div id="upload-tab-content" class="upload-tab-content active">
-                                <div class="file-upload-area" id="project-upload-area">
-                                    <input type="file" id="project-image-file" accept="image/*" multiple style="display: none;">
-                                    <div class="upload-content">
-                                        <div class="upload-icon">📁</div>
-                                        <p class="upload-text">Click to upload or drag and drop</p>
-                                        <p class="upload-hint">PNG, JPG, WEBP up to 5MB each (multiple allowed)</p>
+                                <div class="form-row">
+                                    <div class="form-group" style="flex: 1;">
+                                        <label for="project-image-url-input">Image URL</label>
+                                        <input type="url" id="project-image-url-input" placeholder="https://example.com/image.jpg">
+                                    </div>
+                                    <div class="form-group" style="align-self: flex-end;">
+                                        <button type="button" class="btn" id="add-image-url-btn">Add Image</button>
                                     </div>
                                 </div>
-                            </div>
-                            
-                            <!-- Existing Images Tab -->
-                            <div id="existing-tab-content" class="upload-tab-content">
-                                <div class="existing-images-grid" id="existing-images-grid">
-                                    <p class="loading-text">Loading images...</p>
-                                </div>
+                                <p class="upload-hint">Use direct image links (PNG, JPG, WEBP, GIF).</p>
                             </div>
                             
                             <!-- Selected Images Preview -->
@@ -264,13 +257,6 @@
             </div>
         </div>
 
-        <!-- Images Tab -->
-        <div id="tab-images" class="tab-content">
-            <div class="data-list">
-                <h3>Uploaded Images</h3>
-                <div id="images-gallery"></div>
-            </div>
-        </div>
     </div>
 
     <script src="js/config.js"></script>

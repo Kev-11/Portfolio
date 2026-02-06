@@ -268,8 +268,7 @@ async function loadAllData() {
             loadExperience(),
             loadSkills(),
             loadAbout(),
-            loadContacts(),
-            loadImages()
+            loadContacts()
         ]);
     } catch (error) {
         console.error('Error loading data:', error);
@@ -824,193 +823,41 @@ window.removeTech = function(index) {
 // ==================== FILE UPLOAD ====================
 
 function setupFileUpload() {
-    const uploadArea = document.getElementById('project-upload-area');
-    const fileInput = document.getElementById('project-image-file');
+    const urlInput = document.getElementById('project-image-url-input');
+    const addBtn = document.getElementById('add-image-url-btn');
     const selectedContainer = document.getElementById('selected-images-container');
     const selectedList = document.getElementById('selected-images-list');
-    
-    if (!uploadArea || !fileInput || !selectedContainer || !selectedList) {
+
+    if (!urlInput || !addBtn || !selectedContainer || !selectedList) {
         console.error('[UPLOAD] Required elements not found');
         return;
     }
-    
-    console.log('[UPLOAD] File upload initialized');
-    
-    // Setup tabs
-    setupUploadTabs();
-    
-    // Load existing images
-    loadExistingImages();
-    
-    // Prevent default drag behavior on document
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        document.body.addEventListener(eventName, preventDefaults, false);
-    });
-    
-    function preventDefaults(e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-    
-    // Click to upload
-    uploadArea.addEventListener('click', () => {
-        fileInput.click();
-    });
-    
-    // Drag and drop visual feedback
-    ['dragenter', 'dragover'].forEach(eventName => {
-        uploadArea.addEventListener(eventName, () => {
-            uploadArea.classList.add('drag-over');
-        });
-    });
-    
-    ['dragleave', 'drop'].forEach(eventName => {
-        uploadArea.addEventListener(eventName, () => {
-            uploadArea.classList.remove('drag-over');
-        });
-    });
-    
-    // Handle file drop (multiple files)
-    uploadArea.addEventListener('drop', (e) => {
-        const files = Array.from(e.dataTransfer.files);
-        if (files.length > 0) {
-            handleMultipleFiles(files);
+
+    console.log('[UPLOAD] URL-only image selection initialized');
+
+    addBtn.addEventListener('click', () => {
+        const value = urlInput.value.trim();
+        if (!value) {
+            showNotification('Please enter an image URL', 'error');
+            return;
         }
-    });
-    
-    // Handle file selection via input (multiple files)
-    fileInput.addEventListener('change', (e) => {
-        const files = Array.from(e.target.files);
-        if (files.length > 0) {
-            handleMultipleFiles(files);
-        }
-    });
-    
-    // Setup upload tabs
-    function setupUploadTabs() {
-        const tabs = document.querySelectorAll('.upload-tab');
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                const tabName = tab.dataset.uploadTab;
-                
-                // Update active tab
-                tabs.forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                
-                // Update active content
-                document.querySelectorAll('.upload-tab-content').forEach(content => {
-                    content.classList.remove('active');
-                });
-                document.getElementById(`${tabName}-tab-content`).classList.add('active');
-            });
-        });
-    }
-    
-    // Load existing images from server
-    async function loadExistingImages() {
         try {
-            const images = await apiCall('/api/admin/images');
-            const grid = document.getElementById('existing-images-grid');
-            
-            if (images.length === 0) {
-                grid.innerHTML = '<p class="loading-text">No images available. Upload some first!</p>';
+            const url = new URL(value);
+            if (!['http:', 'https:'].includes(url.protocol)) {
+                showNotification('URL must start with http or https', 'error');
                 return;
             }
-            
-            grid.innerHTML = images.map(img => `
-                <div class="existing-image-item ${selectedImages.includes(img.url) ? 'selected' : ''}" 
-                     data-url="${img.url}" onclick="toggleExistingImage('${img.url}')">
-                    <img src="${API_URL}${img.url}" alt="${img.filename}">
-                </div>
-            `).join('');
-            
-        } catch (error) {
-            console.error('[UPLOAD] Error loading existing images:', error);
-            const grid = document.getElementById('existing-images-grid');
-            grid.innerHTML = '<p class="loading-text">Failed to load images</p>';
-        }
-    }
-    
-    // Toggle existing image selection (global)
-    window.toggleExistingImage = function(url) {
-        const index = selectedImages.indexOf(url);
-        if (index > -1) {
-            selectedImages.splice(index, 1);
-        } else {
-            selectedImages.push(url);
-        }
-        
-        renderSelectedImages();
-        loadExistingImages(); // Refresh to update selected state
-        showNotification(index > -1 ? 'Image removed' : 'Image added', 'info');
-    };
-    
-    // Handle multiple files
-    async function handleMultipleFiles(files) {
-        console.log('[UPLOAD] Processing', files.length, 'files');
-        
-        for (const file of files) {
-            // Validate file type
-            if (!file.type.startsWith('image/')) {
-                showNotification(`Skipped ${file.name}: Not an image file`, 'error');
-                continue;
+            if (!selectedImages.includes(url.toString())) {
+                selectedImages.push(url.toString());
+                renderSelectedImages();
+                showNotification('Image added', 'success');
             }
-            
-            // Validate file size (5MB)
-            const maxSize = 5 * 1024 * 1024;
-            if (file.size > maxSize) {
-                showNotification(`Skipped ${file.name}: File too large`, 'error');
-                continue;
-            }
-            
-            // Upload to server
-            await uploadToServer(file);
+            urlInput.value = '';
+        } catch (e) {
+            showNotification('Invalid URL format', 'error');
         }
-        
-        // Reset file input
-        fileInput.value = '';
-    }
-    
-    // Upload file to server
-    async function uploadToServer(file) {
-        try {
-            showNotification(`Uploading ${file.name}...`, 'info');
-            
-            const formData = new FormData();
-            formData.append('file', file);
-            
-            const response = await fetch(`${API_URL}/api/admin/upload`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Basic ${authToken}`
-                },
-                body: formData
-            });
-            
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.detail || 'Upload failed');
-            }
-            
-            const data = await response.json();
-            console.log('[UPLOAD] Success:', data.url);
-            
-            // Add to selected images
-            if (!selectedImages.includes(data.url)) {
-                selectedImages.push(data.url);
-            }
-            
-            renderSelectedImages();
-            loadExistingImages();
-            
-            showNotification(`${file.name} uploaded!`, 'success');
-            
-        } catch (error) {
-            console.error('[UPLOAD] Error:', error);
-            showNotification(`Upload failed: ${error.message}`, 'error');
-        }
-    }
-    
+    });
+
     // Render selected images with drag-and-drop reordering
     function renderSelectedImages() {
         if (selectedImages.length === 0) {
@@ -1035,7 +882,6 @@ function setupFileUpload() {
     window.removeSelectedImage = function(index) {
         selectedImages.splice(index, 1);
         renderSelectedImages();
-        loadExistingImages();
     };
     
     // Setup drag and drop for reordering
@@ -1157,57 +1003,7 @@ function switchTab(tabName) {
 }
 
 // ==================== IMAGES MANAGEMENT ====================
-
-async function loadImages() {
-    try {
-        const images = await apiCall('/api/admin/images');
-        renderImagesGallery(images);
-    } catch (error) {
-        console.error('Error loading images:', error);
-        showNotification('Failed to load images', 'error');
-    }
-}
-
-function renderImagesGallery(images) {
-    const container = document.getElementById('images-gallery');
-    
-    if (images.length === 0) {
-        container.innerHTML = '<p style="color: var(--slate);">No images uploaded yet.</p>';
-        return;
-    }
-    
-    container.innerHTML = `
-        <div class="images-grid">
-            ${images.map(image => `
-                <div class="image-card">
-                    <img src="${API_URL}${image.url}" alt="${image.filename}" />
-                    <div class="image-info">
-                        <p class="image-filename">${image.filename}</p>
-                        <p class="image-size">${(image.size / 1024).toFixed(2)} KB</p>
-                        <button onclick="deleteImage('${image.filename}')" class="btn-delete-small" title="Delete">
-                            <i class="fas fa-trash"></i> Delete
-                        </button>
-                    </div>
-                </div>
-            `).join('')}
-        </div>
-    `;
-}
-
-window.deleteImage = async function(filename) {
-    if (!confirm(`Are you sure you want to delete "${filename}"?\n\nThis action cannot be undone.`)) {
-        return;
-    }
-    
-    try {
-        await apiCall(`/api/admin/images/${filename}`, 'DELETE');
-        alert('Image deleted successfully');
-        loadImages();
-    } catch (error) {
-        console.error('Error deleting image:', error);
-        alert('Failed to delete image');
-    }
-};
+// Removed for URL-only image support.
 
 // ==================== NOTIFICATIONS ====================
 
