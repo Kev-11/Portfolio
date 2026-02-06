@@ -19,20 +19,26 @@ load_dotenv()
 from backend import database, models, auth, backup
 
 # Configure logging
-log_dir = Path("backend/logs")
-log_dir.mkdir(parents=True, exist_ok=True)
-
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
+log_handlers = [logging.StreamHandler()]
+try:
+    log_dir = Path("backend/logs")
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_handlers.insert(
+        0,
         RotatingFileHandler(
             log_dir / "app.log",
             maxBytes=10 * 1024 * 1024,  # 10MB
             backupCount=5
-        ),
-        logging.StreamHandler()
-    ]
+        )
+    )
+except Exception:
+    # Serverless environments (e.g., Vercel) can be read-only.
+    pass
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=log_handlers
 )
 
 logger = logging.getLogger(__name__)
@@ -92,7 +98,8 @@ async def startup_event():
             logger.warning(f"Application started but database health check failed: {health['message']}")
     except Exception as e:
         logger.error(f"Failed to initialize database: {e}")
-        raise
+        # Don't crash the app on serverless; health endpoint will show degraded.
+        return
 
 
 # Periodic checkpoint task
