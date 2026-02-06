@@ -103,6 +103,8 @@ function setupEventListeners() {
     });
     
     document.getElementById('restore-file-input').addEventListener('change', handleRestore);
+
+    setupApiUrlControls();
 }
 
 // ==================== AUTHENTICATION ====================
@@ -158,6 +160,49 @@ function showLogin() {
 function showDashboard() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('admin-dashboard').style.display = 'block';
+}
+
+function setupApiUrlControls() {
+    const input = document.getElementById('api-url-input');
+    const saveBtn = document.getElementById('api-url-save');
+    const resetBtn = document.getElementById('api-url-reset');
+    const status = document.getElementById('api-url-status');
+
+    if (!input || !saveBtn || !resetBtn || !status) return;
+
+    input.value = window.API_URL || '';
+
+    function showStatus(message, isError = false) {
+        status.textContent = message;
+        status.style.display = 'block';
+        status.style.color = isError ? '#ff6b6b' : '#64ffda';
+    }
+
+    saveBtn.addEventListener('click', () => {
+        const value = input.value.trim();
+        if (!value) {
+            showStatus('Please enter a valid URL', true);
+            return;
+        }
+        try {
+            const url = new URL(value);
+            if (!['http:', 'https:'].includes(url.protocol)) {
+                showStatus('URL must start with http or https', true);
+                return;
+            }
+            localStorage.setItem('API_URL', url.toString().replace(/\/+$/, ''));
+            showStatus('Saved. Reloading...');
+            window.location.reload();
+        } catch (e) {
+            showStatus('Invalid URL format', true);
+        }
+    });
+
+    resetBtn.addEventListener('click', () => {
+        localStorage.removeItem('API_URL');
+        showStatus('Reset. Reloading...');
+        window.location.reload();
+    });
 }
 
 // ==================== API CALLS ====================

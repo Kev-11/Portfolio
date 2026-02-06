@@ -24,6 +24,17 @@
                 <button type="submit">Login</button>
                 <div id="login-error" class="error-message" style="display: none;"></div>
             </form>
+            <div class="login-form" style="margin-top: 20px;">
+                <div class="form-group">
+                    <label for="api-url-input">Backend API URL</label>
+                    <input type="url" id="api-url-input" placeholder="https://your-backend.vercel.app">
+                </div>
+                <div class="form-actions" style="justify-content: space-between;">
+                    <button type="button" id="api-url-save">Save API URL</button>
+                    <button type="button" class="btn btn-secondary" id="api-url-reset">Reset</button>
+                </div>
+                <div id="api-url-status" class="error-message" style="display: none;"></div>
+            </div>
         </div>
     </div>
 
