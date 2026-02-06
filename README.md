@@ -29,7 +29,7 @@ A modern, animated portfolio website featuring a custom hexagonal logo, dynamic 
 - **Modern Dark Theme**: Color scheme from v4.brittanychiang.com
 - **Responsive Design**: Mobile-first, works on all devices
 - **Rate Limiting**: Spam protection on contact submissions
-- **Production Ready**: Easy deployment to Vercel + Render
+- **Production Ready**: Easy deployment to Vercel (frontend + backend)
 
 ## 🚀 Quick Start
 
@@ -127,7 +127,7 @@ Portfolio/
 ├── setup_venv.bat       # Windows setup script
 ├── setup_venv.sh        # Mac/Linux setup script
 ├── vercel.json          # Vercel deployment config
-├── render.yaml          # Render deployment config
+├── vercel.json          # Vercel deployment config
 └── README.md            # This file
 ```
 
@@ -175,27 +175,7 @@ Use MongoDB tools (e.g., `mongosh`) to inspect collections in the `portfolio` da
 
 ## 🌐 Deployment
 
-### Option 1: Vercel (Frontend) + Render (Backend)
-
-#### Deploy Backend to Render
-
-1. Create account at [render.com](https://render.com)
-2. Click "New +" → "Web Service"
-3. Connect your GitHub repository
-4. Configure:
-   - **Name**: portfolio-api
-   - **Environment**: Python 3
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`
-5. Add environment variables (from `.env`)
-6. Add persistent disk:
-   - **Name**: portfolio-data
-   - **Mount Path**: /data
-   - **Size**: 1GB
-7. Deploy!
-8. Copy your Render URL (e.g., `https://portfolio-api.onrender.com`)
-
-#### Deploy Frontend to Vercel
+### Deploy Frontend + Backend on Vercel
 
 1. Create account at [vercel.com](https://vercel.com)
 2. Click "Add New" → "Project"
@@ -203,25 +183,17 @@ Use MongoDB tools (e.g., `mongosh`) to inspect collections in the `portfolio` da
 4. Configure:
    - **Framework Preset**: Other
    - **Root Directory**: ./
-5. Deploy!
-6. After deployment, update frontend JavaScript:
-   - Edit `frontend/js/main.js` and `frontend/js/admin.js`
-   - Replace `YOUR_BACKEND_URL` with your Render URL
-   - Commit and push changes
-
-7. **Update CORS**: Add your Vercel URL to Render environment variables:
+5. Set Environment Variables in Vercel:
    ```
+   MONGODB_URI=...
+   MONGODB_DB=portfolio
+   ADMIN_USERNAME=...
+   ADMIN_PASSWORD=...
    CORS_ORIGINS=https://your-portfolio.vercel.app
    ```
-
-### Option 2: Both on Render
-
-Render supports static sites too:
-
-1. Deploy backend (as above)
-2. Create new "Static Site" for frontend
-3. Configure build settings
-4. Update JavaScript with backend URL
+6. Deploy!
+7. Verify backend:
+   - Visit `https://your-backend.vercel.app/api/health`
 
 ## 🎨 Customization
 
@@ -310,7 +282,7 @@ Manual backup:
 - **Frontend**: HTML5, CSS3, Vanilla JavaScript (ES6+)
 - **Backend**: Python, FastAPI, Uvicorn
 - **Database**: MongoDB
-- **Deployment**: Vercel (frontend), Render (backend)
+- **Deployment**: Vercel (frontend + backend)
 
 ### Skills Featured
 - HTML, CSS, JavaScript

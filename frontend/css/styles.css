@@ -541,7 +541,7 @@ nav.scrolled {
 
 /* To replace the placeholder with your photo, add this:
 .photo-placeholder {
-  background-image: url('../assets/images/profile.jpg');
+  background-image: url('../assets/profile.jpg');
   background-size: cover;
   background-position: center;
   color: transparent;

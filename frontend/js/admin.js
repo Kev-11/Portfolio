@@ -825,15 +825,59 @@ window.removeTech = function(index) {
 function setupFileUpload() {
     const urlInput = document.getElementById('project-image-url-input');
     const addBtn = document.getElementById('add-image-url-btn');
+    const convertBtn = document.getElementById('convert-drive-url-btn');
     const selectedContainer = document.getElementById('selected-images-container');
     const selectedList = document.getElementById('selected-images-list');
 
-    if (!urlInput || !addBtn || !selectedContainer || !selectedList) {
+    if (!urlInput || !addBtn || !convertBtn || !selectedContainer || !selectedList) {
         console.error('[UPLOAD] Required elements not found');
         return;
     }
 
     console.log('[UPLOAD] URL-only image selection initialized');
+
+    function normalizeImageUrl(value) {
+        const trimmed = value.trim();
+        try {
+            const url = new URL(trimmed);
+            if (!['http:', 'https:'].includes(url.protocol)) {
+                return null;
+            }
+
+            if (url.hostname.includes('drive.google.com')) {
+                const fileMatch = url.pathname.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+                const idParam = url.searchParams.get('id');
+                const fileId = (fileMatch && fileMatch[1]) || idParam;
+                if (fileId) {
+                    return `https://drive.google.com/uc?export=view&id=${fileId}`;
+                }
+            }
+
+            return url.toString().replace(/\/+$/, '');
+        } catch (e) {
+            return null;
+        }
+    }
+
+    convertBtn.addEventListener('click', () => {
+        const value = urlInput.value.trim();
+        if (!value) {
+            showNotification('Please paste a Google Drive link first', 'error');
+            return;
+        }
+        const normalized = normalizeImageUrl(value);
+        if (!normalized) {
+            showNotification('Invalid Google Drive link', 'error');
+            return;
+        }
+        urlInput.value = normalized;
+        if (!selectedImages.includes(normalized)) {
+            selectedImages.push(normalized);
+            renderSelectedImages();
+        }
+        showNotification('Converted and added image', 'success');
+        urlInput.value = '';
+    });
 
     addBtn.addEventListener('click', () => {
         const value = urlInput.value.trim();
@@ -841,21 +885,17 @@ function setupFileUpload() {
             showNotification('Please enter an image URL', 'error');
             return;
         }
-        try {
-            const url = new URL(value);
-            if (!['http:', 'https:'].includes(url.protocol)) {
-                showNotification('URL must start with http or https', 'error');
-                return;
-            }
-            if (!selectedImages.includes(url.toString())) {
-                selectedImages.push(url.toString());
-                renderSelectedImages();
-                showNotification('Image added', 'success');
-            }
-            urlInput.value = '';
-        } catch (e) {
+        const normalized = normalizeImageUrl(value);
+        if (!normalized) {
             showNotification('Invalid URL format', 'error');
+            return;
         }
+        if (!selectedImages.includes(normalized)) {
+            selectedImages.push(normalized);
+            renderSelectedImages();
+            showNotification('Image added', 'success');
+        }
+        urlInput.value = '';
     });
 
     // Render selected images with drag-and-drop reordering
