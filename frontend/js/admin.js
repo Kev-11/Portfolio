@@ -1,8 +1,6 @@
 // Admin Panel JavaScript
 // API Base URL
-const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:8000'
-    : 'https://portfolio-back-delta.vercel.app';
+const API_URL = window.API_URL;
 
 // State
 let authToken = sessionStorage.getItem('authToken') || null;

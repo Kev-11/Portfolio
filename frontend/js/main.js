@@ -1,8 +1,6 @@
 // Portfolio Main JavaScript
 // API Base URL - Update this to your backend URL in production
-const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:8000'
-    : 'https://portfolio-back-delta.vercel.app';
+const API_URL = window.API_URL;
 
 // EmailJS Configuration
 const EMAILJS_PUBLIC_KEY = 'ZQo7MVaEQ7zlSZs1v';
