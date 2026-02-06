@@ -28,7 +28,6 @@ A modern, animated portfolio website featuring a custom hexagonal logo, dynamic 
 ### Technical Features
 - **Modern Dark Theme**: Color scheme from v4.brittanychiang.com
 - **Responsive Design**: Mobile-first, works on all devices
-- **Email Notifications**: SMTP integration for contact form
 - **Rate Limiting**: Spam protection on contact submissions
 - **Production Ready**: Easy deployment to Vercel + Render
 
@@ -67,7 +66,6 @@ A modern, animated portfolio website featuring a custom hexagonal logo, dynamic 
    
    Edit `.env` and add your configuration:
    - MongoDB connection (`MONGODB_URI`, `MONGODB_DB`)
-   - SMTP credentials (Gmail app password)
    - Admin username and password
    - CORS origins
 
@@ -120,7 +118,6 @@ Portfolio/
 │   ├── database.py       # MongoDB operations
 │   ├── models.py         # Pydantic models
 │   ├── auth.py           # Authentication
-│   ├── email_service.py  # SMTP email sending
 │   ├── backup.py         # Database backup
 │   └── logs/             # Application logs
 ├── backups/              # Database backups
@@ -145,13 +142,6 @@ Required variables in `.env`:
 MONGODB_URI=mongodb://localhost:27017
 MONGODB_DB=portfolio
 
-# SMTP (Gmail)
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USERNAME=your-email@gmail.com
-SMTP_PASSWORD=your-app-password  # Generate at https://myaccount.google.com/apppasswords
-SMTP_FROM_EMAIL=your-email@gmail.com
-SMTP_TO_EMAIL=your-email@gmail.com
 
 # Admin Authentication
 ADMIN_USERNAME=admin
@@ -168,12 +158,6 @@ RATE_LIMIT_PERIOD=3600
 ENVIRONMENT=development
 ```
 
-### Gmail App Password Setup
-
-1. Go to https://myaccount.google.com/apppasswords
-2. Select "Mail" and "Other (Custom name)"
-3. Enter "Portfolio Contact Form"
-4. Copy the generated password to `SMTP_PASSWORD` in `.env`
 
 ## 📝 Content Management
 
@@ -306,12 +290,6 @@ Manual backup:
 - Activate venv: `venv\Scripts\activate` (Windows) or `source venv/bin/activate` (Mac/Linux)
 - Check logs: `backend/logs/app.log`
 
-### Contact form not sending emails
-
-- Verify SMTP credentials in `.env`
-- Check Gmail app password is correct
-- Review logs for error messages
-- Test with: `python -c "from backend.email_service import send_test_email; import asyncio; asyncio.run(send_test_email())"`
 
 ### Admin panel login fails
 
@@ -332,7 +310,6 @@ Manual backup:
 - **Frontend**: HTML5, CSS3, Vanilla JavaScript (ES6+)
 - **Backend**: Python, FastAPI, Uvicorn
 - **Database**: MongoDB
-- **Email**: aiosmtplib (SMTP)
 - **Deployment**: Vercel (frontend), Render (backend)
 
 ### Skills Featured

@@ -16,7 +16,7 @@ from typing import List, Optional
 # Load environment variables FIRST before importing other modules
 load_dotenv()
 
-from backend import database, models, auth, email_service, backup
+from backend import database, models, auth, backup
 
 # Configure logging
 log_dir = Path("backend/logs")
